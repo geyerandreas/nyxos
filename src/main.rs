@@ -8,6 +8,10 @@ use tracing::{error, info, trace};
 
 #[tokio::main]
 async fn main() {
+    run_server().await;
+}
+
+async fn run_server() {
     tracing_subscriber::fmt::init();
 
     let app = Router::new().route("/", get(|| async { "Hello, World!" }));
