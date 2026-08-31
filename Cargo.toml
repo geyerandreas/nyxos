@@ -1,15 +1,22 @@
-[package]
-name = "nyxos"
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+default-members = ["crates/nyxos"]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2024"
+description = "We don't have a map, but we have momentum. Let's see where this road goes."
+repository = "https://github.com/geyerandreas/nyxos"
+license = "MIT"
 
-[dependencies]
+[workspace.dependencies]
 axum = { version = "0.8.9" }
 tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread", "signal"] }
 tracing = { version = "0.1.44" }
 tracing-subscriber = { version = "0.3.23" }
 
-[lints.clippy]
+[workspace.lints.clippy]
 arithmetic_side_effects = "deny"
 as_conversions = "deny"
 exit = "deny"
