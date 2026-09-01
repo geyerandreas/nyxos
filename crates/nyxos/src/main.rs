@@ -4,10 +4,14 @@ use std::sync::{
 };
 
 use axum::{Router, routing::get};
+use clap::Parser;
+use nyxos_settings::cli::Cli;
 use tracing::{error, info, trace};
 
 #[tokio::main]
 async fn main() {
+    let _cli = Cli::parse();
+
     run_server().await;
 }
 
