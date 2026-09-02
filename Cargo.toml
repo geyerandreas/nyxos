@@ -17,6 +17,9 @@ nyxos-settings = { path = "./crates/settings", version = "0.1.0" }
 tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread", "signal"] }
 tracing = { version = "0.1.44" }
 tracing-subscriber = { version = "0.3.23" }
+utoipa = { version = "5.5.0", features = ["axum_extras", "chrono"] }
+utoipa-axum = { version = "0.2.0" }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
 
 [workspace.lints.clippy]
 arithmetic_side_effects = "deny"

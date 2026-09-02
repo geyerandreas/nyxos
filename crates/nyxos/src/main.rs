@@ -3,9 +3,10 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
 };
 
-use axum::{Router, routing::get};
+use axum::Router;
 use nyxos_settings::cli::{CliResult, parse_cli};
 use tracing::{error, info, trace};
+use utoipa_axum::{router::OpenApiRouter, routes};
 
 #[tokio::main]
 async fn main() {
@@ -20,7 +21,9 @@ async fn main() {
 async fn run_server() {
     tracing_subscriber::fmt::init();
 
-    let app = Router::new().route("/", get(|| async { "Hello, World!" }));
+    let state = AppStateData {};
+
+    let app = create_router(state);
 
     let address = "0.0.0.0:3000";
     let listener = tokio::net::TcpListener::bind(address)
@@ -65,4 +68,19 @@ async fn run_server() {
     }
 
     info!("Server has shut down gracefully");
+}
+
+#[derive(Clone)]
+struct AppStateData {}
+
+fn create_router(state: AppStateData) -> Router {
+    let (router, _) = OpenApiRouter::<AppStateData>::new()
+        .routes(routes!(say_hello))
+        .split_for_parts();
+    return router.with_state(state);
+}
+
+#[utoipa::path(get, path = "/", responses((status = 200, description = "say hello")))]
+async fn say_hello() -> &'static str {
+    return "Hello, World";
 }
