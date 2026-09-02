@@ -2,6 +2,7 @@ target/
 
 .git/
 .gitignore
+.github/
 
 .idea/
 .vscode/
