@@ -1,4 +1,5 @@
 target/
+clippy.toml
 
 .git/
 .gitignore
@@ -24,3 +25,4 @@ README.md
 LICENSE
 logs/
 *.log
+.editorconfig
