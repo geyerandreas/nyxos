@@ -1,12 +1,17 @@
+use axum::Router;
+use nyxos_settings::cli::{CliResult, parse_cli};
 use std::sync::{
     Arc,
     atomic::{AtomicBool, Ordering},
 };
-
-use axum::Router;
-use nyxos_settings::cli::{CliResult, parse_cli};
 use tracing::{error, info, trace};
+use utoipa::OpenApi;
 use utoipa_axum::{router::OpenApiRouter, routes};
+use utoipa_swagger_ui::SwaggerUi;
+
+use crate::openapi::ApiDoc;
+
+mod openapi;
 
 #[tokio::main]
 async fn main() {
@@ -74,10 +79,12 @@ async fn run_server() {
 struct AppStateData {}
 
 fn create_router(state: AppStateData) -> Router {
-    let (router, _) = OpenApiRouter::<AppStateData>::new()
+    let (router, api) = OpenApiRouter::<AppStateData>::with_openapi(ApiDoc::openapi())
         .routes(routes!(say_hello))
         .split_for_parts();
-    return router.with_state(state);
+    return router
+        .with_state(state) // Serve Swagger UI at /api/docs with OpenAPI spec at /api/openapi.json
+        .merge(SwaggerUi::new("/api/docs").url("/api/openapi.json", api));
 }
 
 #[utoipa::path(get, path = "/", responses((status = 200, description = "say hello")))]
