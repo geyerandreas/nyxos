@@ -4,15 +4,17 @@ use std::sync::{
 };
 
 use axum::{Router, routing::get};
-use clap::Parser;
-use nyxos_settings::cli::Cli;
+use nyxos_settings::cli::{CliResult, parse_cli};
 use tracing::{error, info, trace};
 
 #[tokio::main]
 async fn main() {
-    let _cli = Cli::parse();
-
-    run_server().await;
+    match parse_cli() {
+        CliResult::RunServer => run_server().await,
+        CliResult::ShowHelp => {
+            // Help is already printed by parse_cli()
+        }
+    }
 }
 
 async fn run_server() {
