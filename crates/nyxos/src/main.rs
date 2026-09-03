@@ -1,17 +1,12 @@
-use axum::Router;
 use nyxos_settings::cli::{CliResult, parse_cli};
 use std::sync::{
     Arc,
     atomic::{AtomicBool, Ordering},
 };
 use tracing::{error, info, trace};
-use utoipa::OpenApi;
-use utoipa_axum::{router::OpenApiRouter, routes};
-use utoipa_swagger_ui::SwaggerUi;
-
-use crate::openapi::ApiDoc;
 
 mod openapi;
+mod routes;
 
 #[tokio::main]
 async fn main() {
@@ -28,7 +23,7 @@ async fn run_server() {
 
     let state = AppStateData {};
 
-    let app = create_router(state);
+    let app = routes::create_router(state);
 
     let address = "0.0.0.0:3000";
     let listener = tokio::net::TcpListener::bind(address)
@@ -77,17 +72,3 @@ async fn run_server() {
 
 #[derive(Clone)]
 struct AppStateData {}
-
-fn create_router(state: AppStateData) -> Router {
-    let (router, api) = OpenApiRouter::<AppStateData>::with_openapi(ApiDoc::openapi())
-        .routes(routes!(say_hello))
-        .split_for_parts();
-    return router
-        .with_state(state) // Serve Swagger UI at /api/docs with OpenAPI spec at /api/openapi.json
-        .merge(SwaggerUi::new("/api/docs").url("/api/openapi.json", api));
-}
-
-#[utoipa::path(get, path = "/", responses((status = 200, description = "say hello")))]
-async fn say_hello() -> &'static str {
-    return "Hello, World";
-}
