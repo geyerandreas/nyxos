@@ -4,16 +4,20 @@ FROM rust:${RUST_VERSION} AS builder
 
 WORKDIR /app
 
-COPY . .
+COPY Cargo.toml Cargo.lock ./
 
-RUN cargo build --release
+COPY crates/ crates/
+
+RUN cargo build --locked --release --package nyxos
 
 FROM debian:bookworm-slim
 
 WORKDIR /app
 
-COPY --from=builder /app/target/release/nyxos /app/service
+COPY --from=builder /app/target/release/nyxos /app/nyxos
 
 EXPOSE 3000
 
-CMD ["./service", "start"]
+ENTRYPOINT [ "/app/nyxos" ]
+
+CMD ["start"]
