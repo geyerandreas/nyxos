@@ -7,8 +7,10 @@ default-members = ["crates/nyxos"]
 version = "0.1.0"
 edition = "2024"
 description = "We don't have a map, but we have momentum. Let's see where this road goes."
+readme = "README.md"
 repository = "https://github.com/geyerandreas/nyxos"
 license = "MIT"
+keywords = ["python", "registry", "self-hosted"]
 
 [workspace.dependencies]
 axum = { version = "0.8.9" }
