@@ -1,6 +1,10 @@
 use clap::{CommandFactory, Parser, Subcommand};
 use core::option::Option;
-use std::path::PathBuf;
+use std::{
+    fs::OpenOptions,
+    io::{self, Write},
+    path::PathBuf,
+};
 
 use crate::{settings::Settings, sqlite::SQLite};
 
@@ -18,25 +22,58 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     Start {},
+    /// Configuration management commands
+    Config {
+        #[command(subcommand)]
+        command: ConfigCommands,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum ConfigCommands {
+    Init {},
 }
 
 pub enum CliResult {
     ShowHelp,
     RunServer(ResolvedSettings),
+    InitConfig,
 }
 
-pub fn parse_cli() -> CliResult {
+pub fn parse_cli() -> io::Result<CliResult> {
     let cli = Cli::parse();
 
     match cli.command {
-        Some(Commands::Start {}) => CliResult::RunServer(ResolvedSettings {
+        Some(Commands::Start {}) => Ok(CliResult::RunServer(ResolvedSettings {
             settings: Settings {
                 database: SQLite::default(),
             },
-        }),
+        })),
+        Some(Commands::Config {
+            command: ConfigCommands::Init {},
+        }) => {
+            let path = cli
+                .config_file
+                .unwrap_or_else(|| PathBuf::from("nyxos.toml"));
+
+            let settings = Settings {
+                database: SQLite::default(),
+            };
+
+            let contents = toml::to_string_pretty(&settings).map_err(io::Error::other)?;
+
+            let mut file = OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&path)?;
+
+            file.write_all(contents.as_bytes())?;
+
+            Ok(CliResult::InitConfig)
+        }
         None => {
             Cli::command().print_help().ok();
-            CliResult::ShowHelp
+            Ok(CliResult::ShowHelp)
         }
     }
 }

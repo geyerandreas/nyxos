@@ -1,3 +1,6 @@
+use serde::Serialize;
+
+#[derive(Debug, Serialize)]
 pub struct SQLite {
     pub address: String,
     pub port: u16,

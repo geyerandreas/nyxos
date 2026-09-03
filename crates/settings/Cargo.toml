@@ -8,3 +8,5 @@ license.workspace = true
 
 [dependencies]
 clap.workspace = true
+serde.workspace = true
+toml.workspace = true

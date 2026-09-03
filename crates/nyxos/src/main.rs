@@ -10,10 +10,15 @@ mod routes;
 
 #[tokio::main]
 async fn main() {
-    match parse_cli() {
+    let cli = parse_cli().expect("successful CLI parsing");
+
+    match cli {
         CliResult::RunServer(resolved) => run_server(resolved).await,
         CliResult::ShowHelp => {
             // Help is already printed by parse_cli()
+        }
+        CliResult::InitConfig => {
+            // done
         }
     }
 }
