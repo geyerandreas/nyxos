@@ -1,10 +1,6 @@
 use clap::{CommandFactory, Parser, Subcommand};
 use core::option::Option;
-use std::{
-    fs::OpenOptions,
-    io::{self, Write},
-    path::PathBuf,
-};
+use std::path::PathBuf;
 
 use crate::{settings::Settings, sqlite::SQLite};
 
@@ -31,49 +27,37 @@ pub enum Commands {
 
 #[derive(Subcommand)]
 pub enum ConfigCommands {
-    Init {},
+    /// Initialize a new configuration file with default values
+    Init {
+        /// Output file path (default: ./nyxos.toml)
+        #[arg(short = 'o', long = "output")]
+        output: Option<PathBuf>,
+    },
 }
 
 pub enum CliResult {
     ShowHelp,
     RunServer(ResolvedSettings),
-    InitConfig,
+    InitConfig { output: PathBuf },
 }
 
-pub fn parse_cli() -> io::Result<CliResult> {
+pub fn parse_cli() -> CliResult {
     let cli = Cli::parse();
 
     match cli.command {
-        Some(Commands::Start {}) => Ok(CliResult::RunServer(ResolvedSettings {
+        Some(Commands::Start {}) => CliResult::RunServer(ResolvedSettings {
             settings: Settings {
                 database: SQLite::default(),
             },
-        })),
+        }),
         Some(Commands::Config {
-            command: ConfigCommands::Init {},
-        }) => {
-            let path = cli
-                .config_file
-                .unwrap_or_else(|| PathBuf::from("nyxos.toml"));
-
-            let settings = Settings {
-                database: SQLite::default(),
-            };
-
-            let contents = toml::to_string_pretty(&settings).map_err(io::Error::other)?;
-
-            let mut file = OpenOptions::new()
-                .write(true)
-                .create_new(true)
-                .open(&path)?;
-
-            file.write_all(contents.as_bytes())?;
-
-            Ok(CliResult::InitConfig)
-        }
+            command: ConfigCommands::Init { output },
+        }) => CliResult::InitConfig {
+            output: output.unwrap_or_else(|| PathBuf::from("nyxos.toml")),
+        },
         None => {
             Cli::command().print_help().ok();
-            Ok(CliResult::ShowHelp)
+            CliResult::ShowHelp
         }
     }
 }

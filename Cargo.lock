@@ -992,6 +992,7 @@ dependencies = [
  "nyxos-settings",
  "sqlx",
  "tokio",
+ "toml",
  "tracing",
  "tracing-subscriber",
  "utoipa",
@@ -1005,7 +1006,6 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "serde",
- "toml",
 ]
 
 [[package]]

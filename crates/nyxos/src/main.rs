@@ -1,7 +1,13 @@
-use nyxos_settings::cli::{CliResult, ResolvedSettings, parse_cli};
-use std::sync::{
-    Arc,
-    atomic::{AtomicBool, Ordering},
+use nyxos_settings::{
+    cli::{CliResult, ResolvedSettings, parse_cli},
+    settings::Settings,
+};
+use std::{
+    path::Path,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
 };
 use tracing::{error, info, trace};
 
@@ -10,15 +16,39 @@ mod routes;
 
 #[tokio::main]
 async fn main() {
-    let cli = parse_cli().expect("successful CLI parsing");
+    let cli = parse_cli();
 
     match cli {
         CliResult::RunServer(resolved) => run_server(resolved).await,
         CliResult::ShowHelp => {
             // Help is already printed by parse_cli()
         }
-        CliResult::InitConfig => {
-            // done
+        CliResult::InitConfig { output } => {
+            init_config(&output);
+        }
+    }
+}
+
+fn init_config(output: &Path) {
+    if output.exists() {
+        eprintln!("Error: File already exists: {}", output.display());
+        eprintln!("Remove the file or specify a different output path");
+        std::process::exit(1);
+    }
+
+    match toml::to_string_pretty(&Settings::default()) {
+        Ok(toml) => match std::fs::write(output, toml) {
+            Ok(()) => {
+                println!("Configuration file created: {}", output.display());
+            }
+            Err(e) => {
+                eprintln!("Error writing config file: {e}");
+                std::process::exit(1)
+            }
+        },
+        Err(e) => {
+            eprintln!("Error serializing config: {e}");
+            std::process::exit(1)
         }
     }
 }

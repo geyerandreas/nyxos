@@ -1,3 +1,3 @@
 pub mod cli;
-mod settings;
+pub mod settings;
 mod sqlite;
