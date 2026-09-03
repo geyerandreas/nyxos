@@ -2,6 +2,8 @@ use clap::{CommandFactory, Parser, Subcommand};
 use core::option::Option;
 use std::path::PathBuf;
 
+use crate::{settings::Settings, sqlite::SQLite};
+
 #[derive(Parser)]
 #[command(name = "nyxos", version, about)]
 pub struct Cli {
@@ -20,17 +22,25 @@ pub enum Commands {
 
 pub enum CliResult {
     ShowHelp,
-    RunServer,
+    RunServer(ResolvedSettings),
 }
 
 pub fn parse_cli() -> CliResult {
     let cli = Cli::parse();
 
     match cli.command {
-        Some(Commands::Start {}) => CliResult::RunServer,
+        Some(Commands::Start {}) => CliResult::RunServer(ResolvedSettings {
+            settings: Settings {
+                database: SQLite::default(),
+            },
+        }),
         None => {
             Cli::command().print_help().ok();
             CliResult::ShowHelp
         }
     }
+}
+
+pub struct ResolvedSettings {
+    pub settings: Settings,
 }

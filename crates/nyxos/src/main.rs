@@ -1,4 +1,4 @@
-use nyxos_settings::cli::{CliResult, parse_cli};
+use nyxos_settings::cli::{CliResult, ResolvedSettings, parse_cli};
 use std::sync::{
     Arc,
     atomic::{AtomicBool, Ordering},
@@ -11,15 +11,20 @@ mod routes;
 #[tokio::main]
 async fn main() {
     match parse_cli() {
-        CliResult::RunServer => run_server().await,
+        CliResult::RunServer(resolved) => run_server(resolved).await,
         CliResult::ShowHelp => {
             // Help is already printed by parse_cli()
         }
     }
 }
 
-async fn run_server() {
+async fn run_server(settings: ResolvedSettings) {
     tracing_subscriber::fmt::init();
+
+    let _pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .connect(&settings.settings.database.db)
+        .await
+        .expect("successful database connect");
 
     let state = AppStateData {};
 
