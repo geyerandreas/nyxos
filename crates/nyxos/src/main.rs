@@ -26,6 +26,17 @@ async fn main() {
         CliResult::InitConfig { output } => {
             init_config(&output);
         }
+        CliResult::ShowConfig(resolved) => show_config(resolved),
+    }
+}
+
+fn show_config(resolved: ResolvedSettings) {
+    match toml::to_string_pretty(&resolved.settings) {
+        Ok(toml) => println!("{toml}"),
+        Err(e) => {
+            eprintln!("Error serializing config: {e}");
+            std::process::exit(1);
+        }
     }
 }
 

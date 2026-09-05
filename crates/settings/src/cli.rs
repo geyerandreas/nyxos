@@ -33,12 +33,15 @@ pub enum ConfigCommands {
         #[arg(short = 'o', long = "output")]
         output: Option<PathBuf>,
     },
+    /// Show the current configuration
+    Show {},
 }
 
 pub enum CliResult {
     ShowHelp,
     RunServer(ResolvedSettings),
     InitConfig { output: PathBuf },
+    ShowConfig(ResolvedSettings),
 }
 
 pub fn parse_cli() -> CliResult {
@@ -55,6 +58,13 @@ pub fn parse_cli() -> CliResult {
         }) => CliResult::InitConfig {
             output: output.unwrap_or_else(|| PathBuf::from("nyxos.toml")),
         },
+        Some(Commands::Config {
+            command: ConfigCommands::Show {},
+        }) => CliResult::ShowConfig(ResolvedSettings {
+            settings: Settings {
+                database: SQLite::default(),
+            },
+        }),
         None => {
             Cli::command().print_help().ok();
             CliResult::ShowHelp
