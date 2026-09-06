@@ -18,4 +18,5 @@ utoipa.workspace = true
 utoipa-axum.workspace = true
 utoipa-swagger-ui.workspace = true
 
+nyxos-db.workspace = true
 nyxos-settings.workspace = true

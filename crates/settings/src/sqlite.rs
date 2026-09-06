@@ -14,7 +14,7 @@ impl Default for SQLite {
         Self {
             address: "localhost".to_string(),
             port: 0,
-            db: "nyxos.db".to_string(),
+            db: "sqlite://./nyxos.sqlite?mode=rwc".to_string(),
             user: String::new(),
             password: String::new(),
         }

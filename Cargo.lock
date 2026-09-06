@@ -989,6 +989,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "clap",
+ "nyxos-db",
  "nyxos-settings",
  "sqlx",
  "tokio",
@@ -998,6 +999,15 @@ dependencies = [
  "utoipa",
  "utoipa-axum",
  "utoipa-swagger-ui",
+]
+
+[[package]]
+name = "nyxos-db"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "serde",
+ "sqlx",
 ]
 
 [[package]]

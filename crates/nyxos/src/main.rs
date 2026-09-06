@@ -1,3 +1,4 @@
+use axum::extract::FromRef;
 use nyxos_settings::{
     cli::{CliResult, ResolvedSettings, parse_cli},
     settings::Settings,
@@ -67,14 +68,17 @@ fn init_config(output: &Path) {
 async fn run_server(settings: ResolvedSettings) {
     tracing_subscriber::fmt::init();
 
-    let _pool = sqlx::sqlite::SqlitePoolOptions::new()
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
         .connect(&settings.settings.database.db)
         .await
         .expect("successful database connect");
 
-    let state = AppStateData {};
+    sqlx::migrate!("../../migrations")
+        .run(&pool)
+        .await
+        .expect("successful database migration");
 
-    let app = routes::create_router(state);
+    let app = routes::create_router(AppStateData { pool });
 
     let address = "0.0.0.0:3000";
     let listener = tokio::net::TcpListener::bind(address)
@@ -122,4 +126,12 @@ async fn run_server(settings: ResolvedSettings) {
 }
 
 #[derive(Clone)]
-struct AppStateData {}
+struct AppStateData {
+    pool: sqlx::SqlitePool,
+}
+
+impl FromRef<AppStateData> for sqlx::SqlitePool {
+    fn from_ref(state: &AppStateData) -> Self {
+        state.pool.clone()
+    }
+}
