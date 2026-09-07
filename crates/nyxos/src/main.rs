@@ -1,4 +1,5 @@
 use axum::extract::FromRef;
+use nyxos_auth::jwt::JwtService;
 use nyxos_settings::{
     cli::{CliResult, ResolvedSettings, parse_cli},
     settings::Settings,
@@ -78,7 +79,10 @@ async fn run_server(settings: ResolvedSettings) {
         .await
         .expect("successful database migration");
 
-    let app = routes::create_router(AppStateData { pool });
+    let jwt_secret = std::env::var("NYXOS_JWT_SECRET").expect("NYXOS_JWT_SECRET must be set");
+    let jwt = JwtService::new(jwt_secret);
+
+    let app = routes::create_router(AppStateData { pool, jwt });
 
     let address = "0.0.0.0:3000";
     let listener = tokio::net::TcpListener::bind(address)
@@ -128,6 +132,7 @@ async fn run_server(settings: ResolvedSettings) {
 #[derive(Clone)]
 struct AppStateData {
     pool: sqlx::SqlitePool,
+    jwt: JwtService,
 }
 
 impl FromRef<AppStateData> for sqlx::SqlitePool {
