@@ -13,6 +13,7 @@ use std::{
 };
 use tracing::{error, info, trace};
 
+mod auth;
 mod openapi;
 mod routes;
 
@@ -138,5 +139,11 @@ struct AppStateData {
 impl FromRef<AppStateData> for sqlx::SqlitePool {
     fn from_ref(state: &AppStateData) -> Self {
         state.pool.clone()
+    }
+}
+
+impl FromRef<AppStateData> for JwtService {
+    fn from_ref(state: &AppStateData) -> Self {
+        state.jwt.clone()
     }
 }

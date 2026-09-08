@@ -10,3 +10,5 @@ license.workspace = true
 axum.workspace = true
 serde.workspace = true
 sqlx.workspace = true
+
+nyxos-auth.workspace = true

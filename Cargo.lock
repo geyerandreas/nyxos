@@ -1354,6 +1354,7 @@ dependencies = [
  "nyxos-auth",
  "nyxos-db",
  "nyxos-settings",
+ "serde",
  "sqlx",
  "tokio",
  "toml",
@@ -1379,6 +1380,7 @@ name = "nyxos-db"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "nyxos-auth",
  "serde",
  "sqlx",
 ]

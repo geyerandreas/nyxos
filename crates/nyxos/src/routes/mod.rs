@@ -1,3 +1,4 @@
+use crate::auth::AuthUser;
 use crate::openapi::ApiDoc;
 use axum::{Router, routing::get};
 use utoipa::OpenApi;
@@ -5,6 +6,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::AppStateData;
+mod auth;
 mod health;
 
 pub fn create_router(state: AppStateData) -> Router {
@@ -23,6 +25,8 @@ pub fn create_router(state: AppStateData) -> Router {
                 .put(nyxos_db::crud::update_user)
                 .delete(nyxos_db::crud::delete_user),
         )
+        .route("/api/v1/protected", get(protected_endpoint))
+        .route("/api/v1/auth/login", axum::routing::post(auth::login))
         .with_state(state)
         .merge(SwaggerUi::new("/api/docs").url("/api/openapi.json", api))
 }
@@ -30,4 +34,8 @@ pub fn create_router(state: AppStateData) -> Router {
 #[utoipa::path(get, path = "/", responses((status = 200, description = "say hello")))]
 async fn say_hello() -> &'static str {
     return "Hello, World";
+}
+
+async fn protected_endpoint(AuthUser { user_id }: AuthUser) -> String {
+    format!("Authenticated user: {user_id}")
 }
