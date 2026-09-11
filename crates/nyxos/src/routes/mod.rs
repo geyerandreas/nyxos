@@ -28,9 +28,9 @@ pub fn create_router(state: AppStateData) -> Router {
         )
         .route("/api/v1/protected", get(protected_endpoint))
         .route("/api/v1/auth/login", axum::routing::post(auth::login))
-        .layer(TraceLayer::new_for_http())
         .with_state(state)
         .merge(SwaggerUi::new("/api/docs").url("/api/openapi.json", api))
+        .layer(TraceLayer::new_for_http())
 }
 
 #[utoipa::path(get, path = "/", responses((status = 200, description = "say hello")))]

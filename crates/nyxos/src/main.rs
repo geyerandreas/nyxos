@@ -2,6 +2,7 @@ use axum::extract::FromRef;
 use nyxos_auth::jwt::JwtService;
 use nyxos_settings::{
     cli::{CliResult, ResolvedSettings, parse_cli},
+    log::{Log, LogFormat},
     settings::Settings,
 };
 use std::{
@@ -12,7 +13,7 @@ use std::{
     },
 };
 use tracing::{error, info, trace};
-use tracing_subscriber::EnvFilter;
+use tracing_subscriber::fmt::format;
 
 mod auth;
 mod openapi;
@@ -69,7 +70,7 @@ fn init_config(output: &Path) {
 }
 
 async fn run_server(settings: ResolvedSettings) {
-    init_tracing();
+    init_tracing(&settings.settings.log);
 
     let pool = sqlx::sqlite::SqlitePoolOptions::new()
         .connect(&settings.settings.database.db)
@@ -149,12 +150,18 @@ impl FromRef<AppStateData> for JwtService {
     }
 }
 
-fn init_tracing() {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_default_env()
-                .or_else(|_| EnvFilter::try_new("axum_tracing_example=error,tower_http=warn"))
-                .unwrap(),
-        )
-        .init();
+fn init_tracing(log: &Log) {
+    let builder = tracing_subscriber::fmt().with_env_filter(format!(
+        "{},mio::poll=error,want=error,sqlx::query=error,sqlx::postgres=warn,\
+                sea_orm_migration=warn,cargo=error,globset=warn,\
+                hyper=warn,_=warn,reqwest=warn,tower_http={},\
+                object_store::aws::builder=error,h2=error",
+        log.level, log.level_web_server
+    ));
+
+    match log.format {
+        LogFormat::Compact => builder.event_format(format().compact()).init(),
+        LogFormat::Pretty => builder.event_format(format().pretty()).init(),
+        LogFormat::Json => builder.event_format(format().json()).init(),
+    }
 }
