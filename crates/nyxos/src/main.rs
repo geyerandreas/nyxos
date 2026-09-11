@@ -12,6 +12,7 @@ use std::{
     },
 };
 use tracing::{error, info, trace};
+use tracing_subscriber::EnvFilter;
 
 mod auth;
 mod openapi;
@@ -68,7 +69,7 @@ fn init_config(output: &Path) {
 }
 
 async fn run_server(settings: ResolvedSettings) {
-    tracing_subscriber::fmt::init();
+    init_tracing();
 
     let pool = sqlx::sqlite::SqlitePoolOptions::new()
         .connect(&settings.settings.database.db)
@@ -146,4 +147,14 @@ impl FromRef<AppStateData> for JwtService {
     fn from_ref(state: &AppStateData) -> Self {
         state.jwt.clone()
     }
+}
+
+fn init_tracing() {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env()
+                .or_else(|_| EnvFilter::try_new("axum_tracing_example=error,tower_http=warn"))
+                .unwrap(),
+        )
+        .init();
 }
