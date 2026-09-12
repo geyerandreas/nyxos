@@ -1,0 +1,12 @@
+[package]
+name = "nyxos-storage"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+bytes.workspace = true
+futures.workspace = true
+object_store.workspace = true

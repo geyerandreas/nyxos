@@ -1,16 +1,14 @@
-use std::path::PathBuf;
-
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
 pub struct Registry {
-    pub data_directory: PathBuf,
+    pub data_directory: String,
 }
 
 impl Default for Registry {
     fn default() -> Self {
         Self {
-            data_directory: PathBuf::from("./"),
+            data_directory: String::from("./"),
         }
     }
 }

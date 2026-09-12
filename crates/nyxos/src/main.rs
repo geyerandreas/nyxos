@@ -5,6 +5,7 @@ use nyxos_settings::{
     log::{Log, LogFormat},
     settings::Settings,
 };
+use nyxos_storage::file::Storage;
 use std::{
     path::Path,
     sync::{
@@ -71,6 +72,8 @@ fn init_config(output: &Path) {
 
 async fn run_server(settings: ResolvedSettings) {
     init_tracing(&settings.settings.log);
+
+    let storage = Storage::new_local(&settings.settings.registry.data_directory);
 
     let pool = sqlx::sqlite::SqlitePoolOptions::new()
         .connect(&settings.settings.database.db)
