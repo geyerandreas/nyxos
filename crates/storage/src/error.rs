@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-pub type Result<T> = std::result::Result<T, StorageError>;
+pub type Result<T, E = StorageError> = std::result::Result<T, E>;
 
 #[derive(Debug, Error)]
 pub enum StorageError {
