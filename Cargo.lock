@@ -1485,6 +1485,7 @@ dependencies = [
  "bytes",
  "futures",
  "object_store",
+ "thiserror",
 ]
 
 [[package]]
