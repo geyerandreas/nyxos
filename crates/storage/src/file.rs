@@ -49,4 +49,15 @@ impl Storage {
 
         Ok(out)
     }
+
+    pub async fn exist(&self, key: &str) -> Result<bool> {
+        self.store
+            .head(&Path::from(key))
+            .await
+            .map(|_| true)
+            .or_else(|e| match e {
+                object_store::Error::NotFound { .. } => Ok(false),
+                _ => Err(e.into()),
+            })
+    }
 }
