@@ -1,8 +1,8 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{log::Log, registry::Registry, sqlite::SQLite};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Settings {
     pub database: SQLite,
     pub registry: Registry,

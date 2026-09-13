@@ -14,7 +14,7 @@ impl Default for Log {
         Self {
             format: LogFormat::Compact,
             level: LogLevel::default(),
-            level_web_server: LogLevel::Warn,
+            level_web_server: LogLevel::default(),
         }
     }
 }

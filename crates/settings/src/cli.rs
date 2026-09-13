@@ -1,6 +1,6 @@
 use clap::{CommandFactory, Parser, Subcommand};
 use core::option::Option;
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 use crate::settings::Settings;
 
@@ -52,7 +52,14 @@ pub fn parse_cli() -> CliResult {
     };
 
     match cli.command {
-        Some(Commands::Start {}) => CliResult::RunServer(default),
+        Some(Commands::Start {}) => match cli.config_file {
+            Some(config_file) => {
+                let content = fs::read_to_string(config_file).unwrap();
+                let toml: Settings = toml::from_str(&content).expect("lol");
+                CliResult::RunServer(ResolvedSettings { settings: toml })
+            }
+            None => CliResult::RunServer(default),
+        },
         Some(Commands::Config {
             command: ConfigCommands::Init { output },
         }) => CliResult::InitConfig {
@@ -60,7 +67,14 @@ pub fn parse_cli() -> CliResult {
         },
         Some(Commands::Config {
             command: ConfigCommands::Show {},
-        }) => CliResult::ShowConfig(default),
+        }) => match cli.config_file {
+            Some(config_file) => {
+                let content = fs::read_to_string(config_file).unwrap();
+                let toml: Settings = toml::from_str(&content).expect("lol");
+                CliResult::ShowConfig(ResolvedSettings { settings: toml })
+            }
+            None => CliResult::ShowConfig(default),
+        },
         None => {
             Cli::command().print_help().ok();
             CliResult::ShowHelp
