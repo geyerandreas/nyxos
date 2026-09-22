@@ -15,6 +15,8 @@ We don't have a map, but we have momentum. Let's see where this road goes.
 
 ## Relevant PEPs to be implemented
 
+Packaging PEPs: https://peps.python.org/topic/packaging/
+
 ### Core Evolution & Encodings
 
 - PEP 503 – Simple Repository API: The foundational standard defining the base `/simple/`
