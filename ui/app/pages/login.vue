@@ -10,23 +10,27 @@ const accessToken = useCookie<string | null>('nyxos_access_token', {
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 
-const fields: AuthFormField[] = [{
-  name: 'email',
-  type: 'email',
-  label: 'Email',
-  placeholder: 'Enter your email',
-  required: true
-}, {
-  name: 'password',
-  label: 'Password',
-  type: 'password',
-  placeholder: 'Enter your password',
-  required: true
-}, {
-  name: 'remember',
-  label: 'Remember me',
-  type: 'checkbox'
-}]
+const fields: AuthFormField[] = [
+  {
+    name: 'email',
+    type: 'email',
+    label: 'Email',
+    placeholder: 'Enter your email',
+    required: true
+  },
+  {
+    name: 'password',
+    label: 'Password',
+    type: 'password',
+    placeholder: 'Enter your password',
+    required: true
+  },
+  {
+    name: 'remember',
+    label: 'Remember me',
+    type: 'checkbox'
+  }
+]
 
 // TODO
 // const providers = [{
@@ -64,13 +68,15 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
     accessToken.value = response.access_token
     await navigateTo('/')
   } catch (error: unknown) {
-    const status = typeof error === 'object' && error !== null && 'response' in error
-      ? (error as { response?: { status?: number } }).response?.status
-      : undefined
+    const status
+      = typeof error === 'object' && error !== null && 'response' in error
+        ? (error as { response?: { status?: number } }).response?.status
+        : undefined
 
-    errorMessage.value = status === 401
-      ? 'The email or password is incorrect.'
-      : 'Unable to sign in right now. Please try again.'
+    errorMessage.value
+      = status === 401
+        ? 'The email or password is incorrect.'
+        : 'Unable to sign in right now. Please try again.'
   } finally {
     isSubmitting.value = false
   }

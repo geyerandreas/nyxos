@@ -1,18 +1,14 @@
-<script setup>
+<script setup lang="ts">
 useHead({
-  meta: [
-    { name: 'viewport', content: 'width=device-width, initial-scale=1' }
-  ],
-  link: [
-    { rel: 'icon', href: '/favicon.ico' }
-  ],
+  meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1' }],
+  link: [{ rel: 'icon', href: '/favicon.ico' }],
   htmlAttrs: {
     lang: 'en'
   }
 })
 
-const title = 'Nuxt Starter Template'
-const description = 'A production-ready starter template powered by Nuxt UI. Build beautiful, accessible, and performant applications in minutes, not hours.'
+const title = 'nyxos'
+const description = 'A self-hosted private PyPI server for managing and deploying Python packages.'
 
 useSeoMeta({
   title,
@@ -32,17 +28,21 @@ useSeoMeta({
           to="/"
           class="focus-visible:outline-3 outline-primary/25 rounded-md p-1 -ms-1"
         >
-          <AppLogo class="w-auto h-6 shrink-0" />
+          <AppLogo class="h-8" />
         </NuxtLink>
-
-        <TemplateMenu />
       </template>
 
       <template #right>
-        <UColorModeButton />
-
         <UButton
-          to="https://github.com/nuxt-ui-templates/starter"
+          to="http://localhost:3001/login"
+          aria-label="Login"
+          color="neutral"
+          variant="ghost"
+          label="Login"
+        />
+        <UColorModeButton />
+        <UButton
+          to="https://github.com/geyerandreas/nyxos"
           target="_blank"
           icon="i-simple-icons-github"
           aria-label="GitHub"
@@ -56,7 +56,7 @@ useSeoMeta({
       <NuxtPage />
     </UMain>
 
-    <USeparator icon="i-simple-icons-nuxtdotjs" />
+    <USeparator />
 
     <UFooter>
       <template #left>
@@ -67,7 +67,7 @@ useSeoMeta({
 
       <template #right>
         <UButton
-          to="https://github.com/nuxt-ui-templates/starter"
+          to="https://github.com/geyerandreas/nyxos"
           target="_blank"
           icon="i-simple-icons-github"
           aria-label="GitHub"
