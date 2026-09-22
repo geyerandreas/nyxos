@@ -2,6 +2,9 @@
   "files.associations": {
     "*.css": "tailwindcss"
   },
+  "[vue]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
   "editor.quickSuggestions": {
     "strings": "on"
   },
