@@ -1,4 +1,5 @@
 use axum::extract::FromRef;
+use axum::http::HeaderValue;
 use nyxos_auth::jwt::JwtService;
 use nyxos_settings::{
     cli::{CliResult, ResolvedSettings, parse_cli},
@@ -13,6 +14,7 @@ use std::{
         atomic::{AtomicBool, Ordering},
     },
 };
+use tower_http::cors::CorsLayer;
 use tracing::{error, info, trace};
 use tracing_subscriber::fmt::format;
 
@@ -93,7 +95,19 @@ async fn run_server(settings: ResolvedSettings) {
         pool,
         jwt,
         storage: Arc::new(storage),
-    });
+    })
+    .layer(
+        CorsLayer::new()
+            .allow_origin([
+                HeaderValue::from_static("http://localhost:3001"),
+                HeaderValue::from_static("http://127.0.0.1:3001"),
+            ])
+            .allow_methods([axum::http::Method::POST, axum::http::Method::GET])
+            .allow_headers([
+                axum::http::header::CONTENT_TYPE,
+                axum::http::header::AUTHORIZATION,
+            ]),
+    );
 
     let address = "0.0.0.0:3000";
     let listener = tokio::net::TcpListener::bind(address)
