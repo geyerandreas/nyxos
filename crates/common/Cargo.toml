@@ -1,0 +1,11 @@
+[package]
+name = "nyxos-common"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+readme.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+regex.workspace = true

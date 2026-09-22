@@ -10,6 +10,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::get,
 };
+use nyxos_common::normalize_name;
 use std::collections::BTreeSet;
 use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
@@ -77,25 +78,6 @@ async fn list_projects(State(state): State<AppStateData>) -> Response {
     };
 
     json_response(response_data)
-}
-
-fn normalize_name(name: &str) -> String {
-    let mut normalized = String::with_capacity(name.len());
-    let mut separator = false;
-
-    for character in name.chars() {
-        if matches!(character, '-' | '_' | '.') {
-            separator = true;
-        } else {
-            if separator && !normalized.is_empty() {
-                normalized.push('-');
-            }
-            normalized.extend(character.to_lowercase());
-            separator = false;
-        }
-    }
-
-    normalized
 }
 
 async fn list_packages(Path(project): Path<String>, State(state): State<AppStateData>) -> Response {

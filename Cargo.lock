@@ -1445,6 +1445,7 @@ dependencies = [
  "axum",
  "clap",
  "nyxos-auth",
+ "nyxos-common",
  "nyxos-db",
  "nyxos-settings",
  "nyxos-storage",
@@ -1468,6 +1469,13 @@ dependencies = [
  "chrono",
  "jsonwebtoken",
  "serde",
+]
+
+[[package]]
+name = "nyxos-common"
+version = "0.1.0"
+dependencies = [
+ "regex",
 ]
 
 [[package]]
