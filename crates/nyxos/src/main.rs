@@ -18,6 +18,7 @@ use tracing_subscriber::fmt::format;
 
 mod auth;
 mod openapi;
+pub mod packages;
 mod routes;
 
 #[tokio::main]
@@ -73,7 +74,7 @@ fn init_config(output: &Path) {
 async fn run_server(settings: ResolvedSettings) {
     init_tracing(&settings.settings.log);
 
-    let storage = FileStorage::new(&settings.settings.registry.data_directory);
+    let storage = init_storage(&settings);
 
     let pool = sqlx::sqlite::SqlitePoolOptions::new()
         .connect(&settings.settings.database.db)
@@ -88,7 +89,11 @@ async fn run_server(settings: ResolvedSettings) {
     let jwt_secret = std::env::var("NYXOS_JWT_SECRET").expect("NYXOS_JWT_SECRET must be set");
     let jwt = JwtService::new(jwt_secret);
 
-    let app = routes::create_router(AppStateData { pool, jwt });
+    let app = routes::create_router(AppStateData {
+        pool,
+        jwt,
+        storage: Arc::new(storage),
+    });
 
     let address = "0.0.0.0:3000";
     let listener = tokio::net::TcpListener::bind(address)
@@ -139,6 +144,7 @@ async fn run_server(settings: ResolvedSettings) {
 struct AppStateData {
     pool: sqlx::SqlitePool,
     jwt: JwtService,
+    storage: Arc<FileStorage>,
 }
 
 impl FromRef<AppStateData> for sqlx::SqlitePool {
@@ -167,4 +173,9 @@ fn init_tracing(log: &Log) {
         LogFormat::Pretty => builder.event_format(format().pretty()).init(),
         LogFormat::Json => builder.event_format(format().json()).init(),
     }
+}
+
+fn init_storage(settings: &ResolvedSettings) -> FileStorage {
+    FileStorage::new(&settings.settings.registry.data_directory)
+        .expect("the file storage should be created successfully")
 }
