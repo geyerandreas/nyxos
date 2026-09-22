@@ -1,5 +1,8 @@
 # nyxos
 
+[![image](https://img.shields.io/pypi/l/ruff.svg)](https://github.com/astral-sh/ruff/blob/main/LICENSE)
+[![CI](https://github.com/geyerandreas/nyxos/actions/workflows/ci.yml/badge.svg)](https://github.com/geyerandreas/nyxos/actions/workflows/ci.yml)
+
 We don't have a map, but we have momentum. Let's see where this road goes.
 
 ## Roadmap
