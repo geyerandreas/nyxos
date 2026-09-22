@@ -12,6 +12,7 @@ use axum::{
 };
 use nyxos_common::normalize_name;
 use std::collections::BTreeSet;
+use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
 use utoipa_axum::{router::OpenApiRouter, routes};
@@ -45,6 +46,18 @@ pub fn create_router(state: AppStateData) -> Router {
         .with_state(state)
         .merge(SwaggerUi::new("/api/docs").url("/api/openapi.json", api))
         .layer(TraceLayer::new_for_http())
+        .layer(
+            CorsLayer::new()
+                .allow_origin([
+                    HeaderValue::from_static("http://localhost:3001"),
+                    HeaderValue::from_static("http://127.0.0.1:3001"),
+                ])
+                .allow_methods([axum::http::Method::POST, axum::http::Method::GET])
+                .allow_headers([
+                    axum::http::header::CONTENT_TYPE,
+                    axum::http::header::AUTHORIZATION,
+                ]),
+        )
 }
 
 #[utoipa::path(get, path = "/", responses((status = 200, description = "say hello")))]
