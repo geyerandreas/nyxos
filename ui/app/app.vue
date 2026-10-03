@@ -34,7 +34,7 @@ useSeoMeta({
 
       <template #right>
         <UButton
-          to="http://localhost:3001/login"
+          to="/login"
           aria-label="Login"
           color="neutral"
           variant="ghost"
