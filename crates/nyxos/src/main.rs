@@ -95,7 +95,7 @@ async fn run_server(settings: ResolvedSettings) {
         storage: Arc::new(storage),
     });
 
-    let address = "0.0.0.0:5555";
+    let address = "0.0.0.0:8080";
     let listener = tokio::net::TcpListener::bind(address)
         .await
         .unwrap_or_else(|_| panic!("Failed to bind to address: {address}"));
