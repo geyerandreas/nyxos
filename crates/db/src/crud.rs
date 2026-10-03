@@ -4,10 +4,12 @@ use axum::{
     http::StatusCode,
 };
 
-use nyxos_auth::password::hash_password;
+use nyxos_settings::setup::Setup;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use sqlx::prelude::FromRow;
+
+use crate::operations::{self};
 
 #[derive(Debug, Serialize, FromRow)]
 pub struct User {
@@ -20,6 +22,16 @@ pub struct CreateUserPayload {
     pub name: String,
     pub email: String,
     pub password: String,
+}
+
+impl From<Setup> for CreateUserPayload {
+    fn from(value: Setup) -> Self {
+        Self {
+            email: value.admin_email,
+            name: value.admin_name,
+            password: value.admin_password,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -40,20 +52,10 @@ pub async fn create_user(
     State(pool): State<SqlitePool>,
     Json(payload): Json<CreateUserPayload>,
 ) -> Result<(StatusCode, Json<User>), StatusCode> {
-    let password_hash =
-        hash_password(&payload.password).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    sqlx::query_as::<_, User>(
-        "INSERT INTO users (name, email, password_hash)
-        VALUES ($1, $2, $3)
-        RETURNING id, name, email",
-    )
-    .bind(payload.name)
-    .bind(payload.email)
-    .bind(password_hash)
-    .fetch_one(&pool)
-    .await
-    .map(|user| (StatusCode::CREATED, Json(user)))
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+    operations::create_user(&pool, &payload)
+        .await
+        .map(|user| (StatusCode::CREATED, Json(user)))
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
 
 pub async fn get_user(

@@ -87,6 +87,15 @@ async fn run_server(settings: ResolvedSettings) {
         .await
         .expect("successful database migration");
 
+    if nyxos_db::operations::no_user_exists(&pool)
+        .await
+        .expect("users table should be searchable")
+    {
+        let _ = nyxos_db::operations::add_initial_admin_account(&pool, settings.settings.setup)
+            .await
+            .expect("initial admin account should be created");
+    }
+
     let jwt_secret = std::env::var("NYXOS_JWT_SECRET").expect("NYXOS_JWT_SECRET must be set");
     let jwt = JwtService::new(jwt_secret);
 
