@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{log::Log, oauth2::OAuth2, registry::Registry, sqlite::SQLite};
+use crate::{local::Local, log::Log, oauth2::OAuth2, registry::Registry, sqlite::SQLite};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Settings {
@@ -8,6 +8,7 @@ pub struct Settings {
     pub registry: Registry,
     pub log: Log,
     pub oauth2: OAuth2,
+    pub local: Local,
 }
 
 impl Default for Settings {
@@ -17,6 +18,7 @@ impl Default for Settings {
             registry: Registry::default(),
             log: Log::default(),
             oauth2: OAuth2::default(),
+            local: Local::default(),
         }
     }
 }

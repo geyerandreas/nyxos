@@ -7,6 +7,7 @@ use nyxos_settings::{
 };
 use nyxos_storage::file::FileStorage;
 use std::{
+    net::SocketAddr,
     path::Path,
     sync::{
         Arc,
@@ -95,7 +96,8 @@ async fn run_server(settings: ResolvedSettings) {
         storage: Arc::new(storage),
     });
 
-    let address = "0.0.0.0:8080";
+    let address = SocketAddr::from((settings.settings.local.id, settings.settings.local.port));
+
     let listener = tokio::net::TcpListener::bind(address)
         .await
         .unwrap_or_else(|_| panic!("Failed to bind to address: {address}"));
