@@ -20,6 +20,7 @@ utoipa.workspace = true
 utoipa-axum.workspace = true
 utoipa-swagger-ui.workspace = true
 
+nyxos-appstate.workspace = true
 nyxos-auth.workspace = true
 nyxos-common.workspace = true
 nyxos-db.workspace = true

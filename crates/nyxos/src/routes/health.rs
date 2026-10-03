@@ -1,9 +1,9 @@
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
-use crate::AppStateData;
+use crate::AppState;
 
-pub fn create_routes() -> OpenApiRouter<AppStateData> {
+pub fn create_routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new().routes(routes!(health_check))
 }
 

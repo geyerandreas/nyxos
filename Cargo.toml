@@ -36,6 +36,7 @@ utoipa-axum = { version = "0.3.0" }
 utoipa-swagger-ui = { version = "10.0.1", features = ["axum"] }
 uuid = { version = "1.26.0", features = ["v4"] }
 
+nyxos-appstate = { path = "./crates/appstate/", version = "0.1.0" }
 nyxos-auth = { path = "./crates/auth", version = "0.1.0" }
 nyxos-common = { path = "./crates/common", version = "0.1.0" }
 nyxos-db = { path = "./crates/db", version = "0.1.0" }
