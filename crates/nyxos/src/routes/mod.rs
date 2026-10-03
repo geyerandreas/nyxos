@@ -49,8 +49,8 @@ pub fn create_router(state: AppState) -> Router {
         .layer(
             CorsLayer::new()
                 .allow_origin([
-                    HeaderValue::from_static("http://localhost:3001"),
-                    HeaderValue::from_static("http://127.0.0.1:3001"),
+                    HeaderValue::from_static("http://localhost:3000"),
+                    HeaderValue::from_static("http://127.0.0.1:3000"),
                 ])
                 .allow_methods([axum::http::Method::POST, axum::http::Method::GET])
                 .allow_headers([
