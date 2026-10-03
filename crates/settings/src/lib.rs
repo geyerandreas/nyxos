@@ -1,4 +1,5 @@
 pub mod cli;
+mod local;
 pub mod log;
 pub mod oauth2;
 mod registry;
