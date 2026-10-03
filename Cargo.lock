@@ -1459,6 +1459,7 @@ dependencies = [
  "chrono",
  "jsonwebtoken",
  "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -1474,8 +1475,10 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "nyxos-auth",
+ "nyxos-settings",
  "serde",
  "sqlx",
+ "thiserror",
 ]
 
 [[package]]
