@@ -1,0 +1,14 @@
+[package]
+name = "nyxos-appstate"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+axum.workspace = true
+sqlx.workspace = true
+
+nyxos-auth.workspace = true
+nyxos-storage.workspace = true

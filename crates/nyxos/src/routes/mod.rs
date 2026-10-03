@@ -18,12 +18,12 @@ use utoipa::OpenApi;
 use utoipa_axum::{router::OpenApiRouter, routes};
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::AppStateData;
+use crate::AppState;
 mod auth;
 mod health;
 
-pub fn create_router(state: AppStateData) -> Router {
-    let (router, api) = OpenApiRouter::<AppStateData>::with_openapi(ApiDoc::openapi())
+pub fn create_router(state: AppState) -> Router {
+    let (router, api) = OpenApiRouter::<AppState>::with_openapi(ApiDoc::openapi())
         .routes(routes!(say_hello))
         .nest("/api/v1", health::create_routes())
         .split_for_parts();
@@ -69,7 +69,7 @@ async fn protected_endpoint(AuthUser { user_id }: AuthUser) -> String {
     format!("Authenticated user: {user_id}")
 }
 
-async fn list_projects(State(state): State<AppStateData>) -> Response {
+async fn list_projects(State(state): State<AppState>) -> Response {
     let keys = match state.storage.list(None).await {
         Ok(keys) => keys,
         Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
@@ -93,7 +93,7 @@ async fn list_projects(State(state): State<AppStateData>) -> Response {
     json_response(response_data)
 }
 
-async fn list_packages(Path(project): Path<String>, State(state): State<AppStateData>) -> Response {
+async fn list_packages(Path(project): Path<String>, State(state): State<AppState>) -> Response {
     let project = normalize_name(&project);
     let prefix = format!("{project}/");
     let keys = match state.storage.list(Some(&prefix)).await {
@@ -127,7 +127,7 @@ async fn list_packages(Path(project): Path<String>, State(state): State<AppState
 
 async fn download_package(
     Path((project, filename)): Path<(String, String)>,
-    State(state): State<AppStateData>,
+    State(state): State<AppState>,
 ) -> Response {
     if filename.is_empty() || filename.contains('/') {
         return StatusCode::BAD_REQUEST.into_response();

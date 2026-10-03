@@ -1,4 +1,4 @@
-use axum::extract::FromRef;
+use nyxos_appstate::AppState;
 use nyxos_auth::jwt::JwtService;
 use nyxos_settings::{
     cli::{CliResult, ResolvedSettings, parse_cli},
@@ -89,7 +89,7 @@ async fn run_server(settings: ResolvedSettings) {
     let jwt_secret = std::env::var("NYXOS_JWT_SECRET").expect("NYXOS_JWT_SECRET must be set");
     let jwt = JwtService::new(jwt_secret);
 
-    let app = routes::create_router(AppStateData {
+    let app = routes::create_router(AppState {
         pool,
         jwt,
         storage: Arc::new(storage),
@@ -138,25 +138,6 @@ async fn run_server(settings: ResolvedSettings) {
     }
 
     info!("Server has shut down gracefully");
-}
-
-#[derive(Clone)]
-struct AppStateData {
-    pool: sqlx::SqlitePool,
-    jwt: JwtService,
-    storage: Arc<FileStorage>,
-}
-
-impl FromRef<AppStateData> for sqlx::SqlitePool {
-    fn from_ref(state: &AppStateData) -> Self {
-        state.pool.clone()
-    }
-}
-
-impl FromRef<AppStateData> for JwtService {
-    fn from_ref(state: &AppStateData) -> Self {
-        state.jwt.clone()
-    }
 }
 
 fn init_tracing(log: &Log) {

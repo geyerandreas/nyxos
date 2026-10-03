@@ -1423,6 +1423,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "clap",
+ "nyxos-appstate",
  "nyxos-auth",
  "nyxos-common",
  "nyxos-db",
@@ -1438,6 +1439,16 @@ dependencies = [
  "utoipa",
  "utoipa-axum",
  "utoipa-swagger-ui",
+]
+
+[[package]]
+name = "nyxos-appstate"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "nyxos-auth",
+ "nyxos-storage",
+ "sqlx",
 ]
 
 [[package]]
