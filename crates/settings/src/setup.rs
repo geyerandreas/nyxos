@@ -11,7 +11,7 @@ impl Default for Setup {
     fn default() -> Self {
         Self {
             admin_name: "admin".to_owned(),
-            admin_password: "nyxos".to_owned(),
+            admin_password: std::env::var("NYXOS_ADMIN_PASSWORD").unwrap_or_default(),
             admin_email: "admin@example.com".to_owned(),
         }
     }
