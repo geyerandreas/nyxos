@@ -2,7 +2,8 @@
 import type { TableColumn } from '@nuxt/ui'
 
 definePageMeta({
-  layout: false // Custom Layout Activation within template
+  layout: false, // Custom Layout Activation within template
+  middleware: 'auth'
 })
 
 const stats = [
