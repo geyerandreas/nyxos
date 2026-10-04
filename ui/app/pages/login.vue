@@ -66,7 +66,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
     })
 
     accessToken.value = response.access_token
-    await navigateTo('/')
+    await navigateTo('/dashboard')
   } catch (error: unknown) {
     const status
       = typeof error === 'object' && error !== null && 'response' in error
