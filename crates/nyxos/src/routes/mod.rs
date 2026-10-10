@@ -15,36 +15,24 @@ use std::collections::BTreeSet;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
-use utoipa_axum::{router::OpenApiRouter, routes};
+use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::AppState;
 mod auth;
 mod health;
+mod user;
 
 pub fn create_router(state: AppState) -> Router {
-    let (router, api) = OpenApiRouter::<AppState>::with_openapi(ApiDoc::openapi())
-        .routes(routes!(say_hello))
-        .nest("/api/v1", health::create_routes())
-        .split_for_parts();
-    router
-        .route(
-            "/api/v1/users",
-            get(nyxos_db::crud::list_users).post(nyxos_db::crud::create_user),
-        )
-        .route(
-            "/api/v1/users/{id}",
-            get(nyxos_db::crud::get_user)
-                .put(nyxos_db::crud::update_user)
-                .delete(nyxos_db::crud::delete_user),
-        )
+    let api_router: OpenApiRouter<AppState> = OpenApiRouter::with_openapi(ApiDoc::openapi())
+        // .route("/", get(embedded_static_root_handler))
+        .nest("/api/v1/health", health::create_routes())
+        .nest("/api/v1/users", user::create_routes())
         .route("/api/v1/protected", get(protected_endpoint))
         .route("/api/v1/auth/login", axum::routing::post(auth::login))
         .route("/api/v1/simple/", get(list_projects))
         .route("/api/v1/simple/{project}/", get(list_packages))
         .route("/packages/{project}/{filename}", get(download_package))
-        .with_state(state)
-        .merge(SwaggerUi::new("/api/docs").url("/api/openapi.json", api))
         .layer(TraceLayer::new_for_http())
         .layer(
             CorsLayer::new()
@@ -57,12 +45,15 @@ pub fn create_router(state: AppState) -> Router {
                     axum::http::header::CONTENT_TYPE,
                     axum::http::header::AUTHORIZATION,
                 ]),
-        )
-}
+        );
 
-#[utoipa::path(get, path = "/", responses((status = 200, description = "say hello")))]
-async fn say_hello() -> &'static str {
-    return "Hello, World";
+    let (router, api): (Router<AppState>, _) = api_router.split_for_parts();
+
+    let router = router
+        // Serve Swagger UI at /api/docs with OpenAPI spec at /api/openapi.json
+        .merge(SwaggerUi::new("/api/docs").url("/api/openapi.json", api));
+
+    router.with_state(state)
 }
 
 async fn protected_endpoint(AuthUser { user_id }: AuthUser) -> String {

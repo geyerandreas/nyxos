@@ -1479,6 +1479,7 @@ dependencies = [
  "serde",
  "sqlx",
  "thiserror",
+ "utoipa",
 ]
 
 [[package]]

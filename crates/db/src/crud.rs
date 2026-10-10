@@ -8,8 +8,7 @@ use nyxos_settings::setup::Setup;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use sqlx::prelude::FromRow;
-
-use crate::operations::{self};
+use utoipa::ToSchema;
 
 #[derive(Debug, Serialize, FromRow)]
 pub struct User {
@@ -17,7 +16,7 @@ pub struct User {
     pub email: String,
     pub name: String,
 }
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateUserPayload {
     pub name: String,
     pub email: String,
@@ -40,24 +39,6 @@ pub struct UserPayload {
     pub email: String,
 }
 
-pub async fn list_users(State(pool): State<SqlitePool>) -> Result<Json<Vec<User>>, StatusCode> {
-    sqlx::query_as::<_, User>("SELECT * FROM users")
-        .fetch_all(&pool)
-        .await
-        .map(Json)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
-}
-
-pub async fn create_user(
-    State(pool): State<SqlitePool>,
-    Json(payload): Json<CreateUserPayload>,
-) -> Result<(StatusCode, Json<User>), StatusCode> {
-    operations::create_user(&pool, &payload)
-        .await
-        .map(|user| (StatusCode::CREATED, Json(user)))
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
-}
-
 pub async fn get_user(
     State(pool): State<SqlitePool>,
     Path(id): Path<i32>,
@@ -68,23 +49,6 @@ pub async fn get_user(
         .await
         .map(Json)
         .map_err(|_| StatusCode::NOT_FOUND)
-}
-
-pub async fn delete_user(
-    State(pool): State<SqlitePool>,
-    Path(id): Path<i32>,
-) -> Result<StatusCode, StatusCode> {
-    let result = sqlx::query("DELETE FROM users where id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    if result.rows_affected() == 0 {
-        Err(StatusCode::NOT_FOUND)
-    } else {
-        Ok(StatusCode::NO_CONTENT)
-    }
 }
 
 pub async fn update_user(
