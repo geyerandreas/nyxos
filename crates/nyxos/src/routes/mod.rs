@@ -40,7 +40,12 @@ pub fn create_router(state: AppState) -> Router {
                     HeaderValue::from_static("http://localhost:3000"),
                     HeaderValue::from_static("http://127.0.0.1:3000"),
                 ])
-                .allow_methods([axum::http::Method::POST, axum::http::Method::GET])
+                .allow_methods([
+                    axum::http::Method::POST,
+                    axum::http::Method::GET,
+                    axum::http::Method::PATCH,
+                    axum::http::Method::DELETE,
+                ])
                 .allow_headers([
                     axum::http::header::CONTENT_TYPE,
                     axum::http::header::AUTHORIZATION,
