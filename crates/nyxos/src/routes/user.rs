@@ -2,9 +2,7 @@ use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use nyxos_appstate::AppState;
-use nyxos_db::crud::CreateUserPayload;
-use nyxos_db::operations;
-use nyxos_db::users::User;
+use nyxos_db::users::{User, UserCreate};
 use sqlx::SqlitePool;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
@@ -13,7 +11,8 @@ use utoipa_axum::routes;
 pub fn create_routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         // User CRUD
-        .routes(routes!(list_users, add, delete, get))
+        .routes(routes!(list_users, add))
+        .routes(routes!(delete, get))
     // .routes(routes!(user::delete))
     // // User attributes
     // .routes(routes!(user::reset_pwd))
@@ -48,7 +47,7 @@ async fn list_users(State(pool): State<SqlitePool>) -> Result<Json<Vec<User>>, S
     post,
     path = "/",
     tag = "users",
-    request_body = CreateUserPayload,
+    request_body = UserCreate,
     responses(
         (status = 201, description = "User created successfully"),
         (status = 500, description = "Internal server error")
@@ -56,9 +55,9 @@ async fn list_users(State(pool): State<SqlitePool>) -> Result<Json<Vec<User>>, S
 )]
 async fn add(
     State(pool): State<SqlitePool>,
-    Json(payload): Json<CreateUserPayload>,
+    Json(payload): Json<UserCreate>,
 ) -> Result<(StatusCode, Json<User>), StatusCode> {
-    operations::create_user(&pool, &payload)
+    nyxos_db::users::create(&pool, &payload)
         .await
         .map(|user| (StatusCode::CREATED, Json(user)))
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
@@ -97,7 +96,7 @@ pub async fn delete(
 
 /// Get a user
 #[utoipa::path(
-    patch,
+    get,
     path = "/{id}",
     tag = "users",
     params(
@@ -112,7 +111,7 @@ pub async fn get(
     State(pool): State<SqlitePool>,
     Path(id): Path<i32>,
 ) -> Result<Json<User>, StatusCode> {
-    nyxos_db::users::get(pool, id)
+    nyxos_db::users::get(&pool, id)
         .await
         .map(Json)
         .map_err(|_| StatusCode::NOT_FOUND)

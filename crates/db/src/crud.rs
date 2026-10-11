@@ -4,29 +4,10 @@ use axum::{
     http::StatusCode,
 };
 
-use nyxos_settings::setup::Setup;
 use serde::Deserialize;
 use sqlx::SqlitePool;
-use utoipa::ToSchema;
 
 use crate::users::User;
-
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct CreateUserPayload {
-    pub name: String,
-    pub email: String,
-    pub password: String,
-}
-
-impl From<Setup> for CreateUserPayload {
-    fn from(value: Setup) -> Self {
-        Self {
-            email: value.admin_email,
-            name: value.admin_name,
-            password: value.admin_password,
-        }
-    }
-}
 
 #[derive(Debug, Deserialize)]
 pub struct UserPayload {

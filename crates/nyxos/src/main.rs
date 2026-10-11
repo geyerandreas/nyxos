@@ -1,11 +1,14 @@
 use nyxos_appstate::AppState;
 use nyxos_auth::jwt::JwtService;
+use nyxos_db::users::{User, UserCreate, create};
 use nyxos_settings::{
     cli::{CliResult, ResolvedSettings, parse_cli},
     log::{Log, LogFormat},
     settings::Settings,
+    setup::Setup,
 };
 use nyxos_storage::file::FileStorage;
+use sqlx::SqlitePool;
 use std::{
     net::SocketAddr,
     path::Path,
@@ -87,11 +90,11 @@ async fn run_server(settings: ResolvedSettings) {
         .await
         .expect("successful database migration");
 
-    if nyxos_db::operations::no_user_exists(&pool)
+    if nyxos_db::users::no_user_exists(&pool)
         .await
         .expect("users table should be searchable")
     {
-        let _ = nyxos_db::operations::add_initial_admin_account(&pool, settings.settings.setup)
+        let _ = add_initial_admin_account(&pool, settings.settings.setup)
             .await
             .expect("initial admin account should be created");
     }
@@ -170,4 +173,11 @@ fn init_tracing(log: &Log) {
 fn init_storage(settings: &ResolvedSettings) -> FileStorage {
     FileStorage::new(&settings.settings.registry.data_directory)
         .expect("the file storage should be created successfully")
+}
+
+pub async fn add_initial_admin_account(
+    pool: &SqlitePool,
+    user: Setup,
+) -> nyxos_db::error::Result<User> {
+    create(pool, &UserCreate::from(user)).await
 }
