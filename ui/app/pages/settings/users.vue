@@ -5,10 +5,13 @@ const config = useRuntimeConfig()
 const users = ref<User[]>([])
 const isLoading = ref(true)
 const isSaving = ref(false)
-const errorMessage = ref('')
+const isDeleting = ref(false)
 const isModalOpen = ref(false)
+const isDeleteModalOpen = ref(false)
+const userToDelete = ref<User | null>(null)
 const form = ref<UserForm>({ name: '', email: '', password: '' })
 const editingUser = ref<User | null>(null)
+const errorMessage = ref('')
 
 interface User {
   id: number
@@ -91,6 +94,27 @@ async function saveUser() {
   }
 }
 
+async function deleteUser() {
+  if (!userToDelete.value) return
+
+  isDeleting.value = true
+  errorMessage.value = ''
+
+  try {
+    await $fetch(`/api/v1/users/${userToDelete.value.id}`, {
+      baseURL: config.public.apiBase,
+      method: 'DELETE'
+    })
+    users.value = users.value.filter(user => user.id !== userToDelete.value?.id)
+    isDeleteModalOpen.value = false
+    userToDelete.value = null
+  } catch (error: unknown) {
+    errorMessage.value = getErrorMessage(error, 'Unable to delete this user. Please try again.')
+  } finally {
+    isDeleting.value = false
+  }
+}
+
 function getErrorMessage(error: unknown, fallback: string) {
   if (typeof error === 'object' && error !== null && 'response' in error) {
     const response = error.response
@@ -107,6 +131,19 @@ function getErrorMessage(error: unknown, fallback: string) {
 function openCreateModal() {
   editingUser.value = null
   form.value = { name: '', email: '', password: '' }
+  errorMessage.value = ''
+  isModalOpen.value = true
+}
+
+function openDeleteModal(user: User) {
+  userToDelete.value = user
+  errorMessage.value = ''
+  isDeleteModalOpen.value = true
+}
+
+function openEditModal(user: User) {
+  editingUser.value = user
+  form.value = { name: user.name, email: user.email, password: '' }
   errorMessage.value = ''
   isModalOpen.value = true
 }
@@ -153,7 +190,7 @@ await loadUsers()
         :loading="isLoading"
         class="w-full"
       >
-        <template #name-data="{ row }">
+        <template #name-cell="{ row }">
           <div class="flex items-center gap-3">
             <UAvatar
               :text="row.original.name.slice(0, 2).toUpperCase()"
@@ -165,11 +202,11 @@ await loadUsers()
           </div>
         </template>
 
-        <template #email-data="{ row }">
+        <template #email-cell="{ row }">
           <span class="text-muted">{{ row.original.email }}</span>
         </template>
 
-        <!-- <template #actions-data="{ row }">
+        <template #actions-cell="{ row }">
           <div class="flex justify-end gap-1">
             <UButton
               color="neutral"
@@ -186,7 +223,7 @@ await loadUsers()
               @click="openDeleteModal(row.original)"
             />
           </div>
-        </template> -->
+        </template>
 
         <template #empty>
           <div class="py-10 text-center">
@@ -287,7 +324,7 @@ await loadUsers()
       </template>
     </UModal>
 
-    <!-- <UModal v-model:open="isDeleteModalOpen">
+    <UModal v-model:open="isDeleteModalOpen">
       <template #content>
         <UCard>
           <template #header>
@@ -317,6 +354,6 @@ await loadUsers()
           </div>
         </UCard>
       </template>
-    </UModal> -->
+    </UModal>
   </div>
 </template>
