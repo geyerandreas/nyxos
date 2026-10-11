@@ -7,9 +7,9 @@ const links = [[{
   to: '/settings',
   exact: true
 }, {
-  label: 'Members',
+  label: 'Users',
   icon: 'i-lucide-users',
-  to: '/settings/members'
+  to: '/settings/users'
 }, {
   label: 'Notifications',
   icon: 'i-lucide-bell',
