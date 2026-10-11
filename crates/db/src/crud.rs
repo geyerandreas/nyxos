@@ -5,17 +5,12 @@ use axum::{
 };
 
 use nyxos_settings::setup::Setup;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use sqlx::SqlitePool;
-use sqlx::prelude::FromRow;
 use utoipa::ToSchema;
 
-#[derive(Debug, Serialize, FromRow)]
-pub struct User {
-    pub id: i32,
-    pub email: String,
-    pub name: String,
-}
+use crate::users::User;
+
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateUserPayload {
     pub name: String,
@@ -37,18 +32,6 @@ impl From<Setup> for CreateUserPayload {
 pub struct UserPayload {
     pub name: String,
     pub email: String,
-}
-
-pub async fn get_user(
-    State(pool): State<SqlitePool>,
-    Path(id): Path<i32>,
-) -> Result<Json<User>, StatusCode> {
-    sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await
-        .map(Json)
-        .map_err(|_| StatusCode::NOT_FOUND)
 }
 
 pub async fn update_user(

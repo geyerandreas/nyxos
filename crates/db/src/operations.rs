@@ -1,7 +1,4 @@
-use crate::{
-    crud::{CreateUserPayload, User},
-    error::Result,
-};
+use crate::{crud::CreateUserPayload, error::Result, users::User};
 use nyxos_auth::password::hash_password;
 use nyxos_settings::setup::Setup;
 use sqlx::{SqlitePool, query_scalar};

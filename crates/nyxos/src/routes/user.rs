@@ -2,8 +2,9 @@ use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use nyxos_appstate::AppState;
-use nyxos_db::crud::{CreateUserPayload, User};
+use nyxos_db::crud::CreateUserPayload;
 use nyxos_db::operations;
+use nyxos_db::users::User;
 use sqlx::SqlitePool;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
@@ -12,7 +13,7 @@ use utoipa_axum::routes;
 pub fn create_routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         // User CRUD
-        .routes(routes!(list_users, add, delete))
+        .routes(routes!(list_users, add, delete, get))
     // .routes(routes!(user::delete))
     // // User attributes
     // .routes(routes!(user::reset_pwd))
@@ -66,10 +67,10 @@ async fn add(
 /// Delete a user
 #[utoipa::path(
     delete,
-    path = "/{name}",
+    path = "/{id}",
     tag = "users",
     params(
-        ("name" = String, Path, description = "Username to delete")
+        ("id" = i32, Path, description = "User Id to delete")
     ),
     responses(
         (status = 204, description = "User deleted successfully"),
@@ -79,10 +80,10 @@ async fn add(
 )]
 pub async fn delete(
     State(pool): State<SqlitePool>,
-    Path(name): Path<String>,
+    Path(id): Path<i32>,
 ) -> Result<StatusCode, StatusCode> {
-    let result = sqlx::query("DELETE FROM users where name = $1")
-        .bind(name)
+    let result = sqlx::query("DELETE FROM users where id = $1")
+        .bind(id)
         .execute(&pool)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -92,4 +93,27 @@ pub async fn delete(
     } else {
         Ok(StatusCode::NO_CONTENT)
     }
+}
+
+/// Get a user
+#[utoipa::path(
+    patch,
+    path = "/{id}",
+    tag = "users",
+    params(
+        ("id" = i32, Path, description = "User Id")
+    ),
+    responses(
+        (status = 200, description = "Found user"),
+        (status = 404, description = "User does not exist"),
+    ),
+)]
+pub async fn get(
+    State(pool): State<SqlitePool>,
+    Path(id): Path<i32>,
+) -> Result<Json<User>, StatusCode> {
+    nyxos_db::users::get(pool, id)
+        .await
+        .map(Json)
+        .map_err(|_| StatusCode::NOT_FOUND)
 }
