@@ -23,6 +23,12 @@ pub struct UserCreate {
     pub password: String,
 }
 
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct UserUpdate {
+    pub name: Option<String>,
+    pub email: Option<String>,
+}
+
 impl From<Setup> for UserCreate {
     fn from(value: Setup) -> Self {
         Self {
@@ -40,13 +46,21 @@ pub async fn get(pool: &SqlitePool, id: i32) -> Result<User, Error> {
         .await
 }
 
-pub async fn update(pool: &SqlitePool, user: &User) -> Result<User, Error> {
-    sqlx::query_as::<_, User>("UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING *")
-        .bind(&user.name)
-        .bind(&user.email)
-        .bind(&user.id)
-        .fetch_one(pool)
-        .await
+pub async fn update(pool: &SqlitePool, id: i32, user: &UserUpdate) -> Result<User, Error> {
+    sqlx::query_as::<_, User>(
+        "
+        UPDATE users
+        SET
+            name = COALESCE($1, name),
+            email = COALESCE($2, email)
+        WHERE id = $3
+        RETURNING *",
+    )
+    .bind(&user.name)
+    .bind(&user.email)
+    .bind(&id)
+    .fetch_one(pool)
+    .await
 }
 
 pub async fn create(pool: &SqlitePool, user: &UserCreate) -> Result<User> {

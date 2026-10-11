@@ -2,7 +2,7 @@ use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use nyxos_appstate::AppState;
-use nyxos_db::users::{User, UserCreate};
+use nyxos_db::users::{User, UserCreate, UserUpdate};
 use sqlx::SqlitePool;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
@@ -12,7 +12,7 @@ pub fn create_routes() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
         // User CRUD
         .routes(routes!(list_users, add))
-        .routes(routes!(delete, get))
+        .routes(routes!(delete, get, update))
     // .routes(routes!(user::delete))
     // // User attributes
     // .routes(routes!(user::reset_pwd))
@@ -115,4 +115,28 @@ pub async fn get(
         .await
         .map(Json)
         .map_err(|_| StatusCode::NOT_FOUND)
+}
+
+/// Update a user
+#[utoipa::path(
+    patch,
+    path = "/{id}",
+    tag = "users",
+    request_body = UserUpdate,
+    params(
+        ("id" = i32, Path, description = "User Id")
+    ),
+    responses(
+        (status = 500, description = "Internal server error")
+    ),
+)]
+pub async fn update(
+    State(pool): State<SqlitePool>,
+    Path(id): Path<i32>,
+    Json(payload): Json<UserUpdate>,
+) -> Result<Json<User>, StatusCode> {
+    nyxos_db::users::update(&pool, id, &payload)
+        .await
+        .map(Json)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
