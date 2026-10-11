@@ -2,8 +2,8 @@
 import type { TableColumn } from '@nuxt/ui'
 
 definePageMeta({
-  layout: false, // Custom Layout Activation within template
-  middleware: 'auth'
+  layout: false // Custom Layout Activation within template
+
 })
 
 const stats = [
@@ -75,7 +75,7 @@ const actionItems = (row: Package) => [
 </script>
 
 <template>
-  <NuxtLayout name="dashboard">
+  <NuxtLayout name="default">
     <div class="space-y-8">
       <!-- Welcome Header -->
       <div>
