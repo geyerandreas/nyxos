@@ -3,11 +3,13 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStorage } from '@vueuse/core'
 import type { NavigationMenuItem } from '@nuxt/ui'
+import { useAuth } from '~/composables/useAuth'
 
 const toast = useToast()
 const route = useRoute()
 
 const open = ref(false)
+const { isAuthenticated } = useAuth()
 
 const links = [[{
   label: 'Home',
@@ -117,48 +119,62 @@ onMounted(() => {
 </script>
 
 <template>
-  <UDashboardGroup unit="rem" storage="local">
-    <UDashboardSidebar
-      id="default"
-      v-model:open="open"
-      collapsible
-      resizable
-      class="bg-elevated/25"
-      :ui="{ footer: 'lg:border-t lg:border-default' }"
+  <div class="min-h-screen bg-default">
+    <AppHeader />
+
+    <UDashboardGroup
+      unit="rem"
+      storage="local"
+      class="min-h-[calc(100vh-4rem)]"
     >
-      <template #header="{ collapsed }">
-        <TeamsMenu :collapsed="collapsed" />
-      </template>
+      <UDashboardSidebar
+        v-if="isAuthenticated === true"
+        id="default"
+        v-model:open="open"
+        collapsible
+        resizable
+        class="bg-elevated/25"
+        :ui="{ footer: 'lg:border-t lg:border-default' }"
+      >
+        <template #header="{ collapsed }">
+          <TeamsMenu :collapsed="collapsed" />
+        </template>
 
-      <template #default="{ collapsed }">
-        <UDashboardSearchButton :collapsed="collapsed" class="bg-transparent ring-default" />
+        <template #default="{ collapsed }">
+          <UDashboardSearchButton
+            :collapsed="collapsed"
+            class="bg-transparent ring-default"
+          />
 
-        <UNavigationMenu
-          :collapsed="collapsed"
-          :items="links[0]"
-          orientation="vertical"
-          tooltip
-          popover
-        />
+          <UNavigationMenu
+            :collapsed="collapsed"
+            :items="links[0]"
+            orientation="vertical"
+            tooltip
+            popover
+          />
 
-        <UNavigationMenu
-          :collapsed="collapsed"
-          :items="links[1]"
-          orientation="vertical"
-          tooltip
-          class="mt-auto"
-        />
-      </template>
+          <UNavigationMenu
+            :collapsed="collapsed"
+            :items="links[1]"
+            orientation="vertical"
+            tooltip
+            class="mt-auto"
+          />
+        </template>
 
-      <template #footer="{ collapsed }">
-        <UserMenu :collapsed="collapsed" />
-      </template>
-    </UDashboardSidebar>
+        <template #footer="{ collapsed }">
+          <UserMenu :collapsed="collapsed" />
+        </template>
+      </UDashboardSidebar>
 
-    <UDashboardSearch :groups="groups" />
+      <UDashboardSearch :groups="groups" />
 
-    <slot />
+      <main class="min-w-0 flex-1">
+        <slot />
+      </main>
 
-    <NotificationsSlideover />
-  </UDashboardGroup>
+      <NotificationsSlideover />
+    </UDashboardGroup>
+  </div>
 </template>

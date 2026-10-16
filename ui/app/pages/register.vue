@@ -2,11 +2,11 @@
 import * as z from 'zod'
 import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
 
-const config = useRuntimeConfig()
-const accessToken = useCookie<string | null>('nyxos_access_token', {
-  maxAge: 60 * 60,
-  sameSite: 'lax'
+definePageMeta({
+  layout: false
 })
+
+const config = useRuntimeConfig()
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 
@@ -68,13 +68,13 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       body: { name, email, password }
     })
 
-    const response = await $fetch<{ access_token: string }>('/api/v1/auth/login', {
+    await $fetch('/api/v1/auth/login', {
       baseURL: config.public.apiBase,
       method: 'POST',
+      credentials: 'include',
       body: { email, password }
     })
 
-    accessToken.value = response.access_token
     await navigateTo('/dashboard')
   } catch (error: unknown) {
     const status
@@ -93,48 +93,51 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 </script>
 
 <template>
-  <div class="relative flex min-h-[calc(100vh-9rem)] items-center justify-center overflow-hidden px-4 py-12 sm:px-6">
-    <div
-      class="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-      aria-hidden="true"
-    >
-      <div class="absolute left-1/2 top-0 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
-      <div class="absolute -bottom-32 -right-20 h-72 w-72 rounded-full bg-secondary/10 blur-3xl" />
-    </div>
-
-    <UPageCard class="w-full max-w-lg shadow-xl shadow-primary/5">
-      <UAuthForm
-        :schema="schema"
-        title="Create your account"
-        description="Join nyxos to securely manage and deploy your Python packages."
-        icon="i-lucide-user-plus"
-        :fields="fields"
-        :loading="isSubmitting"
-        submit-label="Create account"
-        @submit="onSubmit"
+  <div class="min-h-screen bg-elevated/20">
+    <AppHeader />
+    <main class="relative mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center justify-center overflow-hidden px-4 py-12 sm:px-6 lg:px-8">
+      <div
+        class="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+        aria-hidden="true"
       >
-        <template #validation>
-          <UAlert
-            v-if="errorMessage"
-            color="error"
-            variant="subtle"
-            :description="errorMessage"
-            icon="i-lucide-circle-alert"
-          />
-        </template>
+        <div class="absolute left-1/2 top-0 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+        <div class="absolute -bottom-32 -right-20 h-72 w-72 rounded-full bg-secondary/10 blur-3xl" />
+      </div>
 
-        <template #footer>
-          <p class="text-center text-sm text-muted">
-            Already have an account?
-            <ULink
-              to="/login"
-              class="font-medium text-primary hover:underline"
-            >
-              Sign in
-            </ULink>
-          </p>
-        </template>
-      </UAuthForm>
-    </UPageCard>
+      <UPageCard class="w-full max-w-lg shadow-xl shadow-primary/5">
+        <UAuthForm
+          :schema="schema"
+          title="Create your account"
+          description="Join nyxos to securely manage and deploy your Python packages."
+          icon="i-lucide-user-plus"
+          :fields="fields"
+          :loading="isSubmitting"
+          :submit="{ label: 'Create account', block: true }"
+          @submit="onSubmit"
+        >
+          <template #validation>
+            <UAlert
+              v-if="errorMessage"
+              color="error"
+              variant="subtle"
+              :description="errorMessage"
+              icon="i-lucide-circle-alert"
+            />
+          </template>
+
+          <template #footer>
+            <p class="text-center text-sm text-muted">
+              Already have an account?
+              <ULink
+                to="/login"
+                class="font-medium text-primary hover:underline"
+              >
+                Sign in
+              </ULink>
+            </p>
+          </template>
+        </UAuthForm>
+      </UPageCard>
+    </main>
   </div>
 </template>
