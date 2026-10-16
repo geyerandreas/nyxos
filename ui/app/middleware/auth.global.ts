@@ -1,10 +1,6 @@
 const publicRoutes = new Set(['/login', '/register'])
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (publicRoutes.has(to.path)) {
-    return
-  }
-
   const config = useRuntimeConfig()
   const headers = import.meta.server
     ? useRequestHeaders(['cookie'])
@@ -16,7 +12,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
       credentials: 'include',
       headers
     })
+
+    if (publicRoutes.has(to.path)) {
+      return navigateTo('/dashboard')
+    }
   } catch {
-    return navigateTo('/login')
+    if (!publicRoutes.has(to.path)) {
+      return navigateTo('/login')
+    }
   }
 })
