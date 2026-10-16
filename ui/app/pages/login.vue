@@ -2,11 +2,11 @@
 import * as z from 'zod'
 import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
 
-const config = useRuntimeConfig()
-const accessToken = useCookie<string | null>('nyxos_access_token', {
-  maxAge: 60 * 60,
-  sameSite: 'lax'
+definePageMeta({
+  layout: false
 })
+
+const config = useRuntimeConfig()
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 
@@ -59,13 +59,13 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
   isSubmitting.value = true
 
   try {
-    const response = await $fetch<{ access_token: string }>('/api/v1/auth/login', {
+    await $fetch('/api/v1/auth/login', {
       baseURL: config.public.apiBase,
       method: 'POST',
+      credentials: 'include',
       body: payload.data
     })
 
-    accessToken.value = response.access_token
     await navigateTo('/dashboard')
   } catch (error: unknown) {
     const status
@@ -84,33 +84,42 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center gap-4 p-4 min-h-screen">
-    <UPageCard class="w-full max-w-md">
-      <UAuthForm
-        :schema="schema"
-        title="Welcome back!"
-        description="Enter your credentials to access your account."
-        icon="i-lucide-lock"
-        :fields="fields"
-        :loading="isSubmitting"
-        @submit="onSubmit"
-      >
-        <template #validation>
-          <UAlert
-            v-if="errorMessage"
-            color="error"
-            variant="subtle"
-            :description="errorMessage"
-            icon="i-lucide-circle-alert"
-          />
-        </template>
-        <!-- <template #password-hint>
-          <ULink to="#" class="text-primary font-medium" tabindex="-1">Forgot password?</ULink>
-        </template> -->
-        <!-- <template #footer>
-          By signing in, you agree to our <ULink to="#" class="text-primary font-medium">Terms of Service</ULink>.
-        </template> -->
-      </UAuthForm>
-    </UPageCard>
+  <div class="min-h-screen bg-elevated/20">
+    <AppHeader />
+    <main class="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+      <UPageCard class="w-full max-w-md shadow-xl shadow-primary/5">
+        <UAuthForm
+          :schema="schema"
+          title="Welcome back"
+          description="Sign in to manage your private Python packages."
+          icon="i-lucide-lock"
+          :fields="fields"
+          :loading="isSubmitting"
+          :submit="{ label: 'Sign in', block: true }"
+          @submit="onSubmit"
+        >
+          <template #validation>
+            <UAlert
+              v-if="errorMessage"
+              color="error"
+              variant="subtle"
+              :description="errorMessage"
+              icon="i-lucide-circle-alert"
+            />
+          </template>
+          <template #footer>
+            <p class="text-center text-sm text-muted">
+              Don't have an account?
+              <ULink
+                to="/register"
+                class="font-medium text-primary hover:underline"
+              >
+                Create one
+              </ULink>
+            </p>
+          </template>
+        </UAuthForm>
+      </UPageCard>
+    </main>
   </div>
 </template>

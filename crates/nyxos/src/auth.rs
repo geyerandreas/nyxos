@@ -3,6 +3,7 @@ use axum::{
     http::StatusCode,
 };
 use nyxos_auth::jwt::JwtService;
+use tower_cookies::Cookies;
 
 pub struct AuthUser {
     pub user_id: i32,
@@ -19,19 +20,27 @@ where
         parts: &mut axum::http::request::Parts,
         state: &S,
     ) -> Result<Self, Self::Rejection> {
-        let authorization = parts
-            .headers
-            .get("authorization")
-            .and_then(|value| value.to_str().ok())
-            .ok_or(StatusCode::UNAUTHORIZED)?;
-
-        let token = authorization
-            .strip_prefix("Bearer ")
+        let token = Cookies::from_request_parts(parts, state)
+            .await
+            .ok()
+            .and_then(|cookies| {
+                cookies
+                    .get("auth_token")
+                    .map(|cookie| cookie.value().to_owned())
+            })
+            .or_else(|| {
+                parts
+                    .headers
+                    .get("authorization")
+                    .and_then(|value| value.to_str().ok())
+                    .and_then(|authorization| authorization.strip_prefix("Bearer "))
+                    .map(str::to_owned)
+            })
             .ok_or(StatusCode::UNAUTHORIZED)?;
 
         let jwt = JwtService::from_ref(state);
         let claims = jwt
-            .validate_token(token)
+            .validate_token(&token)
             .map_err(|_| StatusCode::UNAUTHORIZED)?;
 
         let user_id = claims

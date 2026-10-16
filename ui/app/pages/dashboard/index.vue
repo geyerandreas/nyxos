@@ -76,7 +76,7 @@ const actionItems = (row: Package) => [
 
 <template>
   <NuxtLayout name="default">
-    <div class="space-y-8">
+    <div class="mx-auto w-full max-w-[1440px] space-y-8 px-4 py-8 sm:px-6 lg:px-8">
       <!-- Welcome Header -->
       <div>
         <h2 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">

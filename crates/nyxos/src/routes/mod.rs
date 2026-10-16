@@ -12,6 +12,7 @@ use axum::{
 };
 use nyxos_common::normalize_name;
 use std::collections::BTreeSet;
+use tower_cookies::CookieManagerLayer;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use utoipa::OpenApi;
@@ -28,11 +29,12 @@ pub fn create_router(state: AppState) -> Router {
         // .route("/", get(embedded_static_root_handler))
         .nest("/api/v1/health", health::create_routes())
         .nest("/api/v1/users", user::create_routes())
+        .nest("/api/v1/auth", auth::create_routes())
         .route("/api/v1/protected", get(protected_endpoint))
-        .route("/api/v1/auth/login", axum::routing::post(auth::login))
         .route("/api/v1/simple/", get(list_projects))
         .route("/api/v1/simple/{project}/", get(list_packages))
         .route("/packages/{project}/{filename}", get(download_package))
+        .layer(CookieManagerLayer::new())
         .layer(TraceLayer::new_for_http())
         .layer(
             CorsLayer::new()
@@ -49,7 +51,8 @@ pub fn create_router(state: AppState) -> Router {
                 .allow_headers([
                     axum::http::header::CONTENT_TYPE,
                     axum::http::header::AUTHORIZATION,
-                ]),
+                ])
+                .allow_credentials(true),
         );
 
     let (router, api): (Router<AppState>, _) = api_router.split_for_parts();
