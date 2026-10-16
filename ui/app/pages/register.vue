@@ -62,7 +62,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
   try {
     const { name, email, password } = payload.data
 
-    await $fetch('/api/v1/users', {
+    await $fetch('/api/v1/auth/register', {
       baseURL: config.public.apiBase,
       method: 'POST',
       body: { name, email, password }
