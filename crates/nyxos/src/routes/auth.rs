@@ -18,6 +18,7 @@ pub fn create_routes() -> OpenApiRouter<AppState> {
         .routes(routes!(login))
         .routes(routes!(logout))
         .routes(routes!(status))
+        .routes(routes!(register))
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -36,6 +37,13 @@ pub struct LoginResponse {
 struct LoginUser {
     id: i32,
     password_hash: String,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct Register {
+    pub name: String,
+    pub email: String,
+    pub password: String,
 }
 
 /// Login
@@ -115,6 +123,35 @@ pub async fn status(cookies: Cookies, State(jwt): State<JwtService>) -> StatusCo
     } else {
         StatusCode::UNAUTHORIZED
     }
+}
+
+/// Register
+#[utoipa::path(
+    post,
+    path = "/register",
+    tag = "auth",
+    request_body = Register,
+    responses(
+        (status = 201, description = "User created successfully"),
+        (status = 500, description = "Internal server error")
+    ),
+)]
+async fn register(
+    State(pool): State<SqlitePool>,
+    Json(payload): Json<Register>,
+) -> Result<(StatusCode, Json<nyxos_db::users::User>), StatusCode> {
+    nyxos_db::users::create(
+        &pool,
+        &nyxos_db::users::UserCreate {
+            is_admin: false,
+            name: payload.name,
+            email: payload.email,
+            password: payload.password,
+        },
+    )
+    .await
+    .map(|user| (StatusCode::CREATED, Json(user)))
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
 
 fn auth_cookie(value: &str, max_age: Duration) -> Cookie<'static> {
