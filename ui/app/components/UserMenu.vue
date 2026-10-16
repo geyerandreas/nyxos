@@ -3,7 +3,20 @@ defineProps<{
   collapsed?: boolean
 }>()
 
-const router = useRouter()
+const toast = useToast()
+const { isLoggingOut, logout } = useAuth()
+
+async function handleSignOut() {
+  try {
+    await logout()
+  } catch {
+    toast.add({
+      title: 'Unable to sign out',
+      description: 'Please try again.',
+      color: 'error'
+    })
+  }
+}
 </script>
 
 <template>
@@ -11,7 +24,8 @@ const router = useRouter()
     :items="[[{
       label: 'Sign out',
       icon: 'i-lucide-log-out',
-      onSelect: () => router.push('/login')
+      disabled: isLoggingOut,
+      onSelect: handleSignOut
     }]]"
   >
     <UButton
@@ -19,6 +33,7 @@ const router = useRouter()
       variant="ghost"
       block
       :square="collapsed"
+      :loading="isLoggingOut"
       class="justify-start"
     >
       <UAvatar

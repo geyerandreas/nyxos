@@ -1,6 +1,7 @@
 const publicRoutes = new Set(['/login', '/register'])
 
 export default defineNuxtRouteMiddleware(async (to) => {
+  const isAuthenticated = useState<boolean | null>('auth-status', () => null)
   const config = useRuntimeConfig()
   const headers = import.meta.server
     ? useRequestHeaders(['cookie'])
@@ -13,10 +14,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
       headers
     })
 
+    isAuthenticated.value = true
+
     if (publicRoutes.has(to.path)) {
       return navigateTo('/dashboard')
     }
   } catch {
+    isAuthenticated.value = false
+
     if (!publicRoutes.has(to.path)) {
       return navigateTo('/login')
     }
