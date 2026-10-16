@@ -1,4 +1,5 @@
-const publicRoutes = new Set(['/login', '/register'])
+const publicRoutes = new Set(['/', '/login', '/register'])
+const authOnlyRoutes = new Set(['/login', '/register'])
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const isAuthenticated = useState<boolean | null>('auth-status', () => null)
@@ -16,7 +17,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     isAuthenticated.value = true
 
-    if (publicRoutes.has(to.path)) {
+    if (authOnlyRoutes.has(to.path)) {
       return navigateTo('/dashboard')
     }
   } catch {
