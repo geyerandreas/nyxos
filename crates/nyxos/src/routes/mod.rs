@@ -1,7 +1,7 @@
 use crate::openapi::ApiDoc;
 use crate::{
     auth::AuthUser,
-    packages::{FileItem, Meta, ProjectDetailResponse, ProjectItem, ProjectListResponse},
+    packages::{Meta, ProjectItem, ProjectListResponse},
 };
 use axum::{
     Json, Router,
@@ -22,6 +22,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use crate::AppState;
 mod auth;
 mod health;
+mod registry;
 mod user;
 
 pub fn create_router(state: AppState) -> Router {
@@ -30,9 +31,9 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/v1/health", health::create_routes())
         .nest("/api/v1/users", user::create_routes())
         .nest("/api/v1/auth", auth::create_routes())
+        .nest("/api/v1/simple", registry::create_routes())
         .route("/api/v1/protected", get(protected_endpoint))
         .route("/api/v1/simple/", get(list_projects))
-        .route("/api/v1/simple/{project}/", get(list_packages))
         .route("/packages/{project}/{filename}", get(download_package))
         .layer(CookieManagerLayer::new())
         .layer(TraceLayer::new_for_http())
@@ -90,38 +91,6 @@ async fn list_projects(State(state): State<AppState>) -> Response {
     };
 
     json_response(response_data)
-}
-
-async fn list_packages(Path(project): Path<String>, State(state): State<AppState>) -> Response {
-    let project = normalize_name(&project);
-    let prefix = format!("{project}/");
-    let keys = match state.storage.list(Some(&prefix)).await {
-        Ok(keys) => keys,
-        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-    };
-
-    if keys.is_empty() {
-        return StatusCode::NOT_FOUND.into_response();
-    }
-
-    let files = keys
-        .into_iter()
-        .filter_map(|key| key.strip_prefix(&prefix).map(str::to_owned))
-        .filter(|filename| !filename.is_empty() && !filename.contains('/'))
-        .map(|filename| FileItem {
-            url: format!("/packages/{project}/{filename}"),
-            filename,
-            hashes: Default::default(),
-        })
-        .collect();
-
-    json_response(ProjectDetailResponse {
-        meta: Meta {
-            api_version: "1.0".to_string(),
-        },
-        name: project,
-        files,
-    })
 }
 
 async fn download_package(
