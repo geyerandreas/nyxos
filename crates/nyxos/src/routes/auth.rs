@@ -1,16 +1,15 @@
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
-use cookie::time::Duration;
-use cookie::{Cookie, SameSite};
+use cookie::time::SignedDuration;
 use nyxos_appstate::AppState;
 use nyxos_auth::{jwt::JwtService, password::verify_password};
 use serde::{Deserialize, Serialize};
 use sqlx::{SqlitePool, prelude::FromRow};
-use tower_cookies::Cookies;
+use tower_cookies::{Cookie, Cookies};
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 const AUTH_COOKIE_NAME: &str = "auth_token";
-const AUTH_COOKIE_MAX_AGE: Duration = Duration::hours(24);
+const AUTH_COOKIE_MAX_AGE: SignedDuration = SignedDuration::hours(24);
 
 /// Creates the auth routes
 pub fn create_routes() -> OpenApiRouter<AppState> {
@@ -98,7 +97,7 @@ pub async fn login(
     ),
 )]
 pub async fn logout(cookies: Cookies) -> impl IntoResponse {
-    cookies.add(auth_cookie("", Duration::ZERO));
+    cookies.add(auth_cookie("", SignedDuration::ZERO));
 
     StatusCode::OK
 }
@@ -154,13 +153,13 @@ async fn register(
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
 
-fn auth_cookie(value: &str, max_age: Duration) -> Cookie<'static> {
+fn auth_cookie(value: &str, max_age: SignedDuration) -> Cookie<'static> {
     Cookie::build((AUTH_COOKIE_NAME, value.to_owned()))
         .path("/")
         .max_age(max_age)
         .http_only(true)
         .secure(cookie_secure())
-        .same_site(SameSite::Lax)
+        .same_site(tower_cookies::cookie::SameSite::Lax)
         .build()
 }
 
