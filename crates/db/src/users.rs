@@ -2,13 +2,12 @@ use crate::error::Result;
 use nyxos_auth::password::hash_password;
 use nyxos_settings::setup::Setup;
 use serde::Deserialize;
-use serde::Serialize;
 use sqlx::Error;
 use sqlx::SqlitePool;
 use sqlx::prelude::*;
 use utoipa::ToSchema;
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, FromRow)]
 pub struct User {
     pub id: i32,
     pub email: String,
@@ -17,7 +16,7 @@ pub struct User {
     pub is_admin: bool,
 }
 
-#[derive(Debug, Deserialize, ToSchema)]
+#[derive(Debug)]
 pub struct UserCreate {
     pub name: String,
     pub email: String,
@@ -48,6 +47,10 @@ pub async fn get(pool: &SqlitePool, id: i32) -> Result<User, Error> {
         .bind(id)
         .fetch_one(pool)
         .await
+}
+
+pub async fn get_all(pool: &SqlitePool) -> Result<Vec<User>, Error> {
+    sqlx::query_as("SELECT * FROM users").fetch_all(pool).await
 }
 
 pub async fn update(pool: &SqlitePool, id: i32, user: &UserUpdate) -> Result<User, Error> {
