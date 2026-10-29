@@ -1,19 +1,45 @@
 use axum::{
     Json,
-    extract::{Path, Request, State},
-    http::{StatusCode, header},
-    response::IntoResponse,
+    extract::{Multipart, Path, Request, State},
+    http::{
+        HeaderMap, StatusCode,
+        header::{self, CONTENT_TYPE},
+    },
+    response::{Html, IntoResponse, Response},
 };
 use nyxos_appstate::AppState;
 use nyxos_common::normalize_name;
+use nyxos_db::registry::Package;
 use serde::Serialize;
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use utoipa::ToSchema;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
+use crate::registry::ResponseFormat;
+
 /// Creates the registry routes
 pub fn create_routes() -> OpenApiRouter<AppState> {
-    OpenApiRouter::new().routes(routes!(get_project))
+    OpenApiRouter::new()
+        .routes(routes!(get_project))
+        .routes(routes!(list_projects, upload_package))
+}
+
+#[derive(Serialize)]
+pub struct ProjectListJson {
+    pub meta: VersionMeta,
+    pub projects: Vec<ProjectItem>,
+}
+
+#[derive(Serialize)]
+pub struct VersionMeta {
+    #[serde(rename = "_version")]
+    pub version: String,
+}
+
+#[derive(Serialize)]
+pub struct ProjectItem {
+    pub name: String,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -51,7 +77,8 @@ struct ProjectDetailsJson {
 
 #[utoipa::path(
     get,
-    path = "/{project}/",
+    path = "/simple/{project}/",
+    tag = "registry",
     responses(
         (
             status = 200,
@@ -134,4 +161,147 @@ async fn get_project(
         )
             .into_response()
     }
+}
+
+/// List all projects
+#[utoipa::path(
+    get,
+    path = "/simple/",
+    tag = "registry",
+    responses(
+        (status = 200, description = "List of all projects"),
+        (status = 500, description = "Internal server error"),
+    ),
+)]
+async fn list_projects(
+    State(state): State<AppState>,
+    format: ResponseFormat,
+) -> Result<Response, StatusCode> {
+    let projects: Vec<String> = nyxos_db::registry::get_packages(&state.pool)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    match format {
+        ResponseFormat::Json => {
+            let body = ProjectListJson {
+                meta: VersionMeta {
+                    version: "1.0".to_owned(),
+                },
+                projects: projects
+                    .into_iter()
+                    .map(|name| ProjectItem { name })
+                    .collect(),
+            };
+            let mut headers = HeaderMap::new();
+            headers.insert(
+                CONTENT_TYPE,
+                "application/vnd.pypi.simple.v1+json".parse().unwrap(),
+            );
+            Ok((headers, Json(body)).into_response())
+        }
+        ResponseFormat::Html => {
+            let mut html = String::from("<!DOCTYPE html><html><body>\n");
+            for project in projects {
+                html.push_str(&format!(
+                    "<a href=\"/simple/{}/\">{}</a><br>\n",
+                    project, project
+                ));
+            }
+            html.push_str("</body></html>");
+            Ok(Html(html).into_response())
+        }
+    }
+}
+
+#[derive(ToSchema)]
+pub struct UploadPayload {
+    /// The package archive to upload
+    #[schema(value_type = String, format = Binary)]
+    pub content: Vec<u8>,
+    /// The package name
+    pub name: String,
+    /// The package version
+    pub version: String,
+}
+
+/// Upload a package
+#[utoipa::path(
+    post,
+    path = "/simple/",
+    tag = "registry",
+    request_body(
+        content = UploadPayload,
+        description = "The package file and associated metadata",
+        content_type = "multipart/form-data"
+    ),
+    responses(
+        (status = 201, description = "Package upload successful"),
+        (status = 400, description = "Bad request"),
+    ),
+)]
+async fn upload_package(
+    State(state): State<AppState>,
+    mut multipart: Multipart,
+) -> Result<(StatusCode, Json<Package>), StatusCode> {
+    let mut file_bytes = Vec::new();
+    let mut filename = String::new();
+    let mut name = String::new();
+    let mut version = String::new();
+
+    // Consume multipart stream safely
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|_| StatusCode::BAD_REQUEST)?
+    {
+        let field_name = field.name().unwrap_or("").to_string();
+
+        match field_name.as_str() {
+            "content" => {
+                filename = field.file_name().unwrap_or("artifact.whl").to_string();
+                file_bytes = field
+                    .bytes()
+                    .await
+                    .map_err(|_| StatusCode::BAD_REQUEST)?
+                    .to_vec();
+            }
+            "name" => {
+                name = field.text().await.map_err(|_| StatusCode::BAD_REQUEST)?;
+            }
+            "version" => {
+                version = field.text().await.map_err(|_| StatusCode::BAD_REQUEST)?;
+            }
+            _ => {}
+        }
+    }
+
+    if file_bytes.is_empty() || name.is_empty() || version.is_empty() {
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    // Compute cryptographic SHA256 integrity hash required by client tools
+
+    let mut hasher = Sha256::new();
+    hasher.update(&file_bytes);
+    let hash_result = hex::encode(hasher.finalize());
+
+    // Write metadata to state layer, stream bytes to backend local storage folder path
+    // Production note: Store package metadata & files on target block paths or S3
+    let storage_key = format!("{}/{}/{filename}", "storage", normalize_name(&name));
+    state
+        .storage
+        .put(&storage_key, file_bytes)
+        .await
+        .map_err(|error| {
+            tracing::error!(%error, key = %storage_key, "failed to store package");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })?;
+
+    nyxos_db::registry::add_package(&state.pool, &name)
+        .await
+        .map(|package| (StatusCode::CREATED, Json(package)))
+        .map_err(|error| {
+            tracing::error!(%error, package = %name, "failed to add package");
+            StatusCode::INTERNAL_SERVER_ERROR
+        })
 }

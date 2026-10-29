@@ -1,7 +1,9 @@
 use crate::error::Result;
+use nyxos_common::normalize_name;
+use serde::Serialize;
 use sqlx::{Error, SqlitePool, prelude::FromRow};
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct Package {
     pub id: i32,
     pub name: String,
@@ -35,4 +37,24 @@ pub async fn get_package_files(
         .bind(package_id)
         .fetch_all(pool)
         .await
+}
+
+pub async fn get_packages(pool: &SqlitePool) -> Result<Vec<String>, Error> {
+    sqlx::query_scalar("SELECT name FROM Packages ORDER BY name ASC")
+        .fetch_all(pool)
+        .await
+}
+
+pub async fn add_package(pool: &SqlitePool, package_name: &str) -> Result<Package> {
+    let result = sqlx::query_as(
+        "INSERT INTO Packages (name, normalized_name)
+        VALUES ($1, $2)
+        RETURNING *",
+    )
+    .bind(package_name)
+    .bind(normalize_name(package_name))
+    .fetch_one(pool)
+    .await?;
+
+    Ok(result)
 }

@@ -23,6 +23,7 @@ use tracing_subscriber::fmt::format;
 mod auth;
 mod openapi;
 pub mod packages;
+mod registry;
 mod routes;
 
 #[tokio::main]

@@ -1,17 +1,12 @@
 use crate::openapi::ApiDoc;
-use crate::{
-    auth::AuthUser,
-    packages::{Meta, ProjectItem, ProjectListResponse},
-};
 use axum::{
-    Json, Router,
+    Router,
     extract::{Path, State},
     http::{HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
     routing::get,
 };
 use nyxos_common::normalize_name;
-use std::collections::BTreeSet;
 use tower_cookies::CookieManagerLayer;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
@@ -31,9 +26,7 @@ pub fn create_router(state: AppState) -> Router {
         .nest("/api/v1/health", health::create_routes())
         .nest("/api/v1/users", user::create_routes())
         .nest("/api/v1/auth", auth::create_routes())
-        .nest("/api/v1/simple", registry::create_routes())
-        .route("/api/v1/protected", get(protected_endpoint))
-        .route("/api/v1/simple/", get(list_projects))
+        .nest("/api/v1/registry", registry::create_routes())
         .route("/packages/{project}/{filename}", get(download_package))
         .layer(CookieManagerLayer::new())
         .layer(TraceLayer::new_for_http())
@@ -65,34 +58,6 @@ pub fn create_router(state: AppState) -> Router {
     router.with_state(state)
 }
 
-async fn protected_endpoint(AuthUser { user_id }: AuthUser) -> String {
-    format!("Authenticated user: {user_id}")
-}
-
-async fn list_projects(State(state): State<AppState>) -> Response {
-    let keys = match state.storage.list(None).await {
-        Ok(keys) => keys,
-        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-    };
-
-    let projects = keys
-        .iter()
-        .filter_map(|key| key.split_once('/').map(|(name, _)| normalize_name(name)))
-        .collect::<BTreeSet<_>>()
-        .into_iter()
-        .map(|name| ProjectItem { name })
-        .collect();
-
-    let response_data = ProjectListResponse {
-        meta: Meta {
-            api_version: "1.0".to_string(),
-        },
-        projects,
-    };
-
-    json_response(response_data)
-}
-
 async fn download_package(
     Path((project, filename)): Path<(String, String)>,
     State(state): State<AppState>,
@@ -112,15 +77,6 @@ async fn download_package(
     response.headers_mut().insert(
         header::CONTENT_TYPE,
         HeaderValue::from_static("application/octet-stream"),
-    );
-    response
-}
-
-fn json_response<T: serde::Serialize>(value: T) -> Response {
-    let mut response = Json(value).into_response();
-    response.headers_mut().insert(
-        header::CONTENT_TYPE,
-        HeaderValue::from_static("application/vnd.pypi.simple.v1+json"),
     );
     response
 }

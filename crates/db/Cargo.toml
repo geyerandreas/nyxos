@@ -14,4 +14,5 @@ thiserror.workspace = true
 utoipa.workspace = true
 
 nyxos-auth.workspace = true
+nyxos-common.workspace = true
 nyxos-settings.workspace = true
